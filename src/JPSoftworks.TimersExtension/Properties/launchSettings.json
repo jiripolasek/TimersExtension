@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "TimersExtension (Package)": {
+      "commandName": "MsixPackage",
+      "doNotLaunchApp": true
+    },
+    "TimersExtension (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
