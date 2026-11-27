@@ -2,7 +2,7 @@ const repository = "https://github.com/jiripolasek/TimersExtension";
 
 export const site = {
   name: "Timers for Command Palette",
-  description: "Run countdowns, track stopwatch laps, and keep both in view on the PowerToys Command Palette Dock.",
+  description: "An extension for PowerToys Command Palette. Run countdowns, record laps, and see live times on the Dock.",
   repository,
   issues: `${repository}/issues`,
   releases: `${repository}/releases`,

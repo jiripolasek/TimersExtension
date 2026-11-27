@@ -4,60 +4,133 @@ import Layout from "../layouts/Layout.astro";
 import Icon from "../components/Icon.astro";
 import Screenshot from "../components/Screenshot.astro";
 import { site, withBase } from "../data/site";
-import timerScreenshot from "../assets/01-timers.png";
 import wallpaper from "../assets/wallpaper.jpg";
-import dockScreenshot from "../assets/05-timers-and-dock-wide.png";
+import timerListScreenshot from "../assets/01-timers.png";
+import stopwatchListScreenshot from "../assets/03-stopwatches.png";
+import stopwatchScreenshot from "../assets/04-stopwatch-laps.png";
+import homeScreenshot from "../assets/06-home-commands.png";
+import templateScreenshot from "../assets/07-home-template-commands.png";
+import heroScreenshot from "../assets/09-website-hero-unbranded.png";
+import countdownScreenshot from "../assets/10-website-countdown-quick-start.png";
+import authorLogo from "../assets/jiri-polasek.png";
 
 const heroBackground = await getImage({ src: wallpaper, width: 1440, format: "webp", quality: 86 });
+const authorMark = await getImage({ src: authorLogo, width: 152, format: "webp" });
+const stateExamples = [
+  {
+    title: "Timers",
+    description: "Count down from a duration or to a finish time. Save a timer as a template and choose an alert.",
+    image: timerListScreenshot,
+    alt: "On the Timers page, Focus is running and Eggs is paused.",
+  },
+  {
+    title: "Stopwatches",
+    description: "Track elapsed time for several activities, record laps, and compare split times.",
+    image: stopwatchListScreenshot,
+    alt: "On the Stopwatches page, Rehearsal is running and Warm-up is paused.",
+  },
+];
 ---
 
 <Layout>
   <section class="hero" style={`--hero-wallpaper: url("${heroBackground.src}")`}>
     <div class="wrap hero-inner">
       <div class="hero-copy">
-        <p class="kicker">PowerToys Command Palette</p>
-        <h1>Timers and <span>stopwatches</span></h1>
-        <p>Start a countdown or record a lap in Command Palette. See your timers and stopwatches on the Dock while you work.</p>
+        <h1><span class="hero-heading-lead">Timers <span class="hero-heading-connector">and</span></span> <span class="hero-heading-accent">stopwatches</span></h1>
+        <p>{site.description}</p>
         <div class="button-row">
           <a class="button button-primary" href="#install">Installation</a>
-          <a class="button button-hero" href={withBase("preview/")}>See screenshots</a>
+          <a class="button button-hero" href="#features">Explore features</a>
         </div>
       </div>
-      <div class="hero-previews">
-        <a class="hero-preview" href={withBase("preview/#dock")} aria-label="See the Dock screenshot">
-          <span class="preview-label">Dock</span>
-          <Screenshot src={dockScreenshot} crop={[799, 0, 322, 38]} alt="The Dock showing Open timer list, a running Focus timer, and a running Rehearsal stopwatch." eager />
-        </a>
-        <a class="hero-preview" href={withBase("preview/#timers")} aria-label="See the Command Palette screenshot">
-          <span class="preview-label">Command Palette</span>
-          <Screenshot src={timerScreenshot} crop={[596, 306, 728, 302]} alt="The Timers list showing Focus running, Eggs paused, and Coffee finished." eager />
-        </a>
+      <figure class="hero-scene">
+        <div class="hero-desktop">
+          <div class="hero-capture">
+            <Screenshot src={heroScreenshot} crop={[232, 0, 976, 768]} alt="Desktop showing the Eggs timer in the Command Palette Dock and the open Timers page, with Rehearsal running in the Dock." eager />
+          </div>
+          <div class="hero-closeup">
+            <div class="hero-dock" role="group" aria-label="Command Palette Dock" tabindex="0">
+              <Screenshot src={heroScreenshot} crop={[546, 0, 348, 37]} alt="The Dock shows the timer list shortcut, the running Eggs timer, and the Rehearsal stopwatch." eager />
+            </div>
+            <div class="hero-window">
+              <Screenshot src={heroScreenshot} crop={[356, 127, 728, 302]} alt="The Timers page shows Eggs running, Focus paused, and Coffee finished." eager />
+            </div>
+          </div>
+        </div>
+        <figcaption>
+          <span>Command Palette and its Dock</span>
+          <a href={withBase("preview/")}>See all screenshots</a>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="state-section" id="features" aria-labelledby="state-heading">
+    <div class="wrap section">
+      <div class="state-intro section-heading">
+        <div>
+          <h2 id="state-heading">Start in <span>Command Palette</span></h2>
+          <p>Open <strong>Timers</strong> or <strong>Stopwatches</strong> from Home. Each command has its own page, with the same green and amber status labels.</p>
+          <ul class="state-key" aria-label="Active item status colors">
+            <li data-state="running">Running</li>
+            <li data-state="paused">Paused</li>
+          </ul>
+        </div>
+        <div class="state-entry">
+          <Screenshot src={homeScreenshot} crop={[600, 312, 516, 170]} alt="Command Palette Home with the Timers and Stopwatches commands pinned." eager />
+        </div>
+      </div>
+      <div class="state-examples">
+        {stateExamples.map(({ title, description, image, alt }) => (
+          <figure class="state-example">
+            <figcaption>
+              <div class="state-example-title">
+                <h3>{title}</h3>
+                <a href={image.src} aria-label={`Full ${title} screenshot`}>Full screenshot</a>
+              </div>
+              <p>{description}</p>
+            </figcaption>
+            <div class="state-preview">
+              <Screenshot src={image} crop={[607, 415, 530, 114]} alt={alt} eager />
+              <Screenshot src={image} crop={[1223, 415, 96, 114]} alt="" eager />
+            </div>
+          </figure>
+        ))}
       </div>
     </div>
   </section>
 
-  <section class="wrap section features" id="features" aria-labelledby="features-heading">
+  <section class="wrap section features" aria-labelledby="features-heading">
     <div class="section-heading">
-      <h2 id="features-heading">From a quick countdown to a full session.</h2>
+      <h2 id="features-heading">Timers in action</h2>
       <p>Run several timers and stopwatches at once. Each can pause, resume, or finish independently.</p>
     </div>
-    <div class="feature-grid">
-      <article class="feature">
-        <Icon name="keyboard" size={24} />
-        <h3>Start from the keyboard</h3>
-        <p>Type <code>Focus 25m</code> or <code>until 15:30</code> in Command Palette. Preview the finish time before you press Enter.</p>
-      </article>
-      <article class="feature">
-        <Icon name="timer" size={24} />
+    <article class="showcase">
+      <div class="showcase-copy">
+        <h3>Set a duration or finish time</h3>
+        <p>Type <code>Focus 25m</code> or <code>until 15:30</code> on Command Palette Home. Check when the timer will end before pressing Enter.</p>
+        <a href={countdownScreenshot.src}>View full countdown screenshot</a>
+      </div>
+      <div class="countdown-preview" role="group" aria-label="Countdown preview screenshot" tabindex="0">
+        <Screenshot src={countdownScreenshot} crop={[60, 63, 720, 374]} alt="Command Palette Home with Focus 25m typed and the selected Start timer result predicting a finish at 12:05 if started at 11:40." />
+      </div>
+    </article>
+    <article class="showcase">
+      <div class="showcase-copy">
         <h3>Keep your usual timers</h3>
-        <p>Save a countdown as a template, pin it to the Dock, or repeat your last timer. Pick a sound or get a silent notification.</p>
-      </article>
-      <article class="feature">
-        <Icon name="stopwatch" size={24} />
+        <p>Save a countdown as a template to start it again from Home. Pin a favorite to the Dock or use Repeat last timer to start the original countdown again.</p>
+        <a href={templateScreenshot.src}>View full template screenshot</a>
+      </div>
+      <Screenshot src={templateScreenshot} crop={[600, 383, 720, 242]} alt="Searching for start timer in Command Palette shows saved Focus, Eggs, and Short break templates." />
+    </article>
+    <article class="showcase">
+      <div class="showcase-copy">
         <h3>Record and compare laps</h3>
-        <p>Track each lap and total elapsed time. Compare the fastest and slowest splits, then copy the final elapsed time.</p>
-      </article>
-    </div>
+        <p>Record a lap with <kbd>Ctrl</kbd> + <kbd>L</kbd>. See each split and the total elapsed time, with the fastest and slowest laps marked. Copy the elapsed time when you finish.</p>
+        <a href={stopwatchScreenshot.src}>View full lap screenshot</a>
+      </div>
+      <Screenshot src={stopwatchScreenshot} crop={[600, 312, 720, 434]} alt="A stopwatch with four recorded laps, including their split and cumulative times and labels for the fastest and slowest laps." />
+    </article>
   </section>
 
   <section class="dock-section" aria-labelledby="dock-heading">
@@ -68,20 +141,20 @@ const heroBackground = await getImage({ src: wallpaper, width: 1440, format: "we
         <p>Pin one timer or stopwatch, or add a Dock band to follow all your running and paused items. The name and time stay visible in Compact mode.</p>
         <a class="text-link" href={site.dockGuide}>Set up the Command Palette Dock</a>
       </div>
-      <dl class="dock-options">
-        <div>
-          <dt>Active timers and stopwatches</dt>
-          <dd>See every running or paused item in its own Dock button.</dd>
-        </div>
-        <div>
-          <dt>Latest active item</dt>
-          <dd>Follow the most recent running or paused timer or stopwatch.</dd>
-        </div>
-        <div>
-          <dt>Saved templates</dt>
-          <dd>Pin a template to start the same countdown again with one click.</dd>
-        </div>
-      </dl>
+      <div class="dock-options">
+        <details name="dock-options" open>
+          <summary>Active timers and stopwatches <Icon name="chevronDown" size={18} /></summary>
+          <p>See every running or paused item in its own Dock button.</p>
+        </details>
+        <details name="dock-options">
+          <summary>Latest active item <Icon name="chevronDown" size={18} /></summary>
+          <p>Follow the most recent running or paused timer or stopwatch.</p>
+        </details>
+        <details name="dock-options">
+          <summary>Saved templates <Icon name="chevronDown" size={18} /></summary>
+          <p>Pin a template to start the same countdown again with one click.</p>
+        </details>
+      </div>
     </div>
   </section>
 
@@ -114,4 +187,26 @@ const heroBackground = await getImage({ src: wallpaper, width: 1440, format: "we
       </article>
     </div>
   </section>
+
+  <section class="creator wrap" aria-label="Creator">
+    <span class="creator-mark" style={`--creator-logo: url("${authorMark.src}")`} aria-hidden="true"></span>
+    <div>
+      <p class="eyebrow">AN INDEPENDENT LITTLE PROJECT</p>
+      <p>Made with care by <a href={site.author}>Jiří Polášek</a>.<br /><span>For people who like their tools to get out of the way.</span></p>
+    </div>
+    <a href={site.repository} class="text-link">Say hello on GitHub <Icon name="arrowUpRight" size={18} /></a>
+  </section>
 </Layout>
+
+<script>
+  const examples = document.querySelector(".state-examples");
+  if (examples && "IntersectionObserver" in window && matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) {
+        examples.classList.add("is-visible");
+        observer.disconnect();
+      }
+    }, { threshold: 0.2 });
+    observer.observe(examples);
+  }
+</script>

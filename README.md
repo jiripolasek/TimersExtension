@@ -34,8 +34,9 @@ to build for another host or path.
 - `src/pages/` contains the landing, screenshots, support, and privacy pages.
 - `src/content/privacy.md` is the privacy text used by the site.
 - `src/data/site.ts` contains the shared links and WinGet package ID.
-- `src/assets/` contains the promo captures and hero wallpaper. The site crops
-  the captures at their original scale and links to the full PNGs.
+- `src/assets/` contains the promo captures and hero wallpaper. The homepage
+  crops captures at their original scale. The gallery shows the full compositions
+  and links to the original PNGs.
 - `public/images/social.png` is the captured social card.
 - The interface uses [Microsoft Fluent System Icons](https://github.com/microsoft/fluentui-system-icons)
   under the [MIT license](public/licenses/fluent-system-icons.txt).
