@@ -75,6 +75,25 @@ public sealed class LabelFormatterTests
         Assert.Equal("Stopwatch", LabelFormatter.FormatStopwatchName(null));
     }
 
+    [Theory]
+    [InlineData("en-US", 61.129, "01:01.12")]
+    [InlineData("fr-FR", 3661.129, "1:01:01,12")]
+    [InlineData("fr-FR", -3661.129, "-1:01:01,12")]
+    public void StopwatchTimeUsesTheRegionalDecimalSeparator(string cultureName, double seconds, string expected)
+    {
+        var originalCulture = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(cultureName);
+
+            Assert.Equal(expected, LabelFormatter.FormatStopwatchTime(TimeSpan.FromSeconds(seconds)));
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = originalCulture;
+        }
+    }
+
     [Fact]
     public void StopwatchListShowsOriginalStartThroughResumeAndThenTheFinish()
     {

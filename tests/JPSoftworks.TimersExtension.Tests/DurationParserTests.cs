@@ -5,6 +5,7 @@
 // ------------------------------------------------------------
 
 using System.Globalization;
+using JPSoftworks.TimersExtension.Resources;
 using JPSoftworks.TimersExtension.Services;
 
 namespace JPSoftworks.TimersExtension.Tests;
@@ -94,9 +95,12 @@ public sealed class DurationParserTests
     [InlineData(3661, "1:01:01")]
     [InlineData(90000, "25:00:00")]
     [InlineData(176461, "49:01:01")]
+    [InlineData(-62, "01:02")]
+    [InlineData(-90061, "25:01:01")]
     public void FormatClockPreservesTotalHours(double seconds, string expected)
     {
-        Assert.Equal(expected, DurationParser.FormatClock(TimeSpan.FromSeconds(seconds)));
+        var sign = seconds < 0 ? CultureInfo.CurrentCulture.NumberFormat.NegativeSign : string.Empty;
+        Assert.Equal(sign + expected, DurationParser.FormatClock(TimeSpan.FromSeconds(seconds)));
     }
 
     [Theory]
@@ -158,6 +162,33 @@ public sealed class DurationParserTests
         finally
         {
             CultureInfo.CurrentCulture = originalCulture;
+        }
+    }
+
+    [Theory]
+    [InlineData("2h", 7200)]
+    [InlineData("2M", 120)]
+    [InlineData("2s", 2)]
+    [InlineData("2 hour", 120)]
+    [InlineData("2 hr", 7200)]
+    [InlineData("1,5 mn", 90)]
+    public void PartialTranslationKeepsSymbolsStableAndPrefersTranslatedWords(string input, double expectedSeconds)
+    {
+        var originalCulture = CultureInfo.CurrentCulture;
+        var originalUICulture = CultureInfo.CurrentUICulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fi-FI");
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("fr-SC");
+
+            Assert.Equal("h|hr|hour|hours", Strings.Parsing_HourAliases);
+            Assert.True(DurationParser.TryParse(input, out var duration));
+            Assert.Equal(TimeSpan.FromSeconds(expectedSeconds), duration);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = originalCulture;
+            CultureInfo.CurrentUICulture = originalUICulture;
         }
     }
 }

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Fallback.StartStopwatchNamedFormat" xml:space="preserve">
+    <value>Chronométrer « {0} »</value>
+  </data>
+  <data name="Parsing.MinuteAliases" xml:space="preserve">
+    <value>mn|minute|minutes|h|s|hour</value>
+    <comment>Intentional collisions with reserved symbols and an English word. HourAliases is intentionally absent.</comment>
+  </data>
+  <data name="Parsing.SecondAliases" xml:space="preserve">
+    <value>seconde|secondes|m</value>
+  </data>
+  <data name="Parsing.TimerPrefixes" xml:space="preserve">
+    <value>start|démarrer|démarrer le minuteur</value>
+  </data>
+  <data name="Parsing.StopwatchPrefixes" xml:space="preserve">
+    <value>start|démarrer|démarrer le chronomètre</value>
+  </data>
+  <data name="Parsing.EndTimePattern" xml:space="preserve">
+    <value>^(?:(?&lt;name&gt;.*?)\s+)?jusqu’à\s+(?&lt;time&gt;.+)$</value>
+  </data>
+</root>

@@ -219,19 +219,7 @@ internal sealed partial class StopwatchFallbackCommandItem : CommandItem, IFallb
         };
     }
 
-    private static string? GetExplicitName(string query)
-    {
-        foreach (var prefix in Strings.Parsing_StopwatchPrefixes.Split('|',
-                     StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
-        {
-            if (query.Length > prefix.Length
-                && char.IsWhiteSpace(query[prefix.Length])
-                && query.StartsWith(prefix, true, Strings.Culture ?? CultureInfo.CurrentUICulture))
-            {
-                return query[prefix.Length..].Trim();
-            }
-        }
-
-        return null;
-    }
+    private static string? GetExplicitName(string query) =>
+        TimerParsingResources.TrimCommandPrefix(query, Strings.Parsing_StopwatchPrefixes,
+            TimerParsingResources.Invariant.StopwatchPrefixes, TimerParsingResources.UICulture);
 }

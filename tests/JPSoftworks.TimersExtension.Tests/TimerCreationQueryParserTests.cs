@@ -169,10 +169,12 @@ public sealed class TimerCreationQueryParserTests
     public void TryParseAcceptsTheCulturesClockFormat(string cultureName)
     {
         var originalCulture = CultureInfo.CurrentCulture;
+        var originalUICulture = CultureInfo.CurrentUICulture;
         try
         {
             var culture = CultureInfo.GetCultureInfo(cultureName);
             CultureInfo.CurrentCulture = culture;
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("en-US");
             var now = new DateTimeOffset(2026, 7, 26, 14, 0, 0, TimeSpan.Zero);
             var localTime = new TimeOnly(15, 30).ToString("t", culture);
 
@@ -185,6 +187,7 @@ public sealed class TimerCreationQueryParserTests
         finally
         {
             CultureInfo.CurrentCulture = originalCulture;
+            CultureInfo.CurrentUICulture = originalUICulture;
         }
     }
 
@@ -234,5 +237,50 @@ public sealed class TimerCreationQueryParserTests
             resources));
         Assert.Equal(TimeSpan.FromMinutes(5), query.Duration);
         Assert.Equal("task 12345678", query.Name);
+    }
+
+    [Theory]
+    [InlineData("lancer un minuteur thé 5m", "thé")]
+    [InlineData("lancer thé 5m", "thé")]
+    [InlineData("start timer thé 5m", "thé")]
+    [InlineData("lancerie 5m", "lancerie")]
+    public void TimerQueryAcceptsLocalizedAndEnglishPrefixes(string input, string name)
+    {
+        var resources = TimerParsingResources.Invariant with { TimerPrefixes = "lancer un minuteur|lancer" };
+        var now = new DateTimeOffset(2026, 7, 26, 14, 0, 0, TimeSpan.Zero);
+
+        Assert.True(TimerCreationQueryParser.TryParse(input, now, TimeZoneInfo.Utc, out var query, resources));
+        Assert.Equal(name, query.Name);
+        Assert.Equal(TimeSpan.FromMinutes(5), query.Duration);
+    }
+
+    [Fact]
+    public void PartialTranslationUsesTheLongestTimerPrefixAndRegionalClock()
+    {
+        var originalCulture = CultureInfo.CurrentCulture;
+        var originalUICulture = CultureInfo.CurrentUICulture;
+        try
+        {
+            var region = CultureInfo.GetCultureInfo("fi-FI");
+            CultureInfo.CurrentCulture = region;
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("fr-SC");
+            var now = new DateTimeOffset(2026, 7, 26, 14, 0, 0, TimeSpan.Zero);
+            var clock = new TimeOnly(15, 30).ToString("t", region);
+
+            Assert.True(TimerCreationQueryParser.TryParse($"de\u0301marrer le minuteur thé jusqu’à {clock}",
+                now, TimeZoneInfo.Utc, out var query));
+            Assert.Equal("thé", query.Name);
+            Assert.Equal(TimeSpan.FromMinutes(90), query.Duration);
+            Assert.Equal(now.AddMinutes(90), query.EndTime);
+
+            Assert.True(TimerCreationQueryParser.TryParse("start timer tea 1,5 mn", now, TimeZoneInfo.Utc, out query));
+            Assert.Equal("tea", query.Name);
+            Assert.Equal(TimeSpan.FromSeconds(90), query.Duration);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = originalCulture;
+            CultureInfo.CurrentUICulture = originalUICulture;
+        }
     }
 }

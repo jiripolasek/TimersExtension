@@ -81,6 +81,27 @@ public sealed class TimerSchedulerTests : IDisposable
         Assert.Equal(saved, restored.GetTemplatesSnapshot());
     }
 
+    [Fact]
+    public void UnnamedTimersKeepTheirNamesLocalizableAfterReload()
+    {
+        var duration = TimeSpan.FromMinutes(4);
+        using (var storage = new TimerStorage(this._directory))
+        using (var scheduler = new TimerScheduler(storage))
+        {
+            scheduler.StartTimer(duration, "  ");
+            scheduler.StartTimer(duration, "Timer 4m");
+        }
+
+        using var reopened = new TimerStorage(this._directory);
+        var timers = reopened.LoadTimers();
+        var unnamed = Assert.Single(timers, timer => timer.Name.Length == 0);
+        Assert.Single(timers, timer => timer.Name == "Timer 4m");
+
+        var alarm = AlarmRequest.FromTimer(unnamed);
+        Assert.Contains(LabelFormatter.FormatTimerName(null, duration), alarm.Title);
+        Assert.Empty(alarm.ToResult(AlarmClosedKind.Restart).TimerName!);
+    }
+
     [Theory]
     [InlineData(1, false)]
     [InlineData(4320, true)]

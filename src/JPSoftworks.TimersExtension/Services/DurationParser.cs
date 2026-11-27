@@ -144,24 +144,15 @@ internal static partial class DurationParser
 
     private static bool TryGetUnitSeconds(string unit, TimerParsingResources resources, out double seconds)
     {
-        var invariant = TimerParsingResources.Invariant;
-        if (TimerParsingResources.MatchesAlias(unit, resources.HourAliases)
-            || TimerParsingResources.MatchesAlias(unit, invariant.HourAliases, CultureInfo.InvariantCulture))
+        seconds = unit switch
         {
-            seconds = 3600;
-        }
-        else if (TimerParsingResources.MatchesAlias(unit, resources.MinuteAliases)
-                 || TimerParsingResources.MatchesAlias(unit, invariant.MinuteAliases, CultureInfo.InvariantCulture))
-        {
-            seconds = 60;
-        }
-        else
-        {
-            seconds = TimerParsingResources.MatchesAlias(unit, resources.SecondAliases)
-                      || TimerParsingResources.MatchesAlias(unit, invariant.SecondAliases, CultureInfo.InvariantCulture)
-                ? 1
-                : 0;
-        }
+            "h" or "H" => 3600,
+            "m" or "M" => 60,
+            "s" or "S" => 1,
+            _ => resources.GetUnitSeconds(unit, TimerParsingResources.UICulture)
+                 ?? TimerParsingResources.Invariant.GetUnitSeconds(unit, CultureInfo.InvariantCulture)
+                 ?? 0
+        };
 
         return seconds > 0;
     }
@@ -209,10 +200,14 @@ internal static partial class DurationParser
 
     public static string FormatClock(TimeSpan duration)
     {
-        return duration.TotalHours >= 1
-            ? string.Create(CultureInfo.InvariantCulture,
-                $"{(long)duration.TotalHours}:{duration.Minutes:D2}:{duration.Seconds:D2}")
-            : duration.ToString(@"mm\:ss", CultureInfo.InvariantCulture);
+        var hours = Math.Abs(duration.Ticks / TimeSpan.TicksPerHour);
+        var minutes = Math.Abs(duration.Minutes);
+        var seconds = Math.Abs(duration.Seconds);
+        var clock = hours > 0
+            ? ResourceFormatter.Format(Strings.Duration_ClockHoursMinutesSecondsFormat,
+                hours, minutes, seconds)
+            : ResourceFormatter.Format(Strings.Duration_ClockMinutesSecondsFormat, minutes, seconds);
+        return duration < TimeSpan.Zero ? CultureInfo.CurrentCulture.NumberFormat.NegativeSign + clock : clock;
     }
 
     public static string FormatCountdown(TimeSpan duration, bool showSeconds)

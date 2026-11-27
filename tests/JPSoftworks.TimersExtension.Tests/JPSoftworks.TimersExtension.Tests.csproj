@@ -25,5 +25,37 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\JPSoftworks.TimersExtension\JPSoftworks.TimersExtension.csproj" />
+    <EmbeddedResource Remove="Localization\Strings.fr-SC.resx" />
+    <UpToDateCheckInput Include="Localization\Strings.fr-SC.resx" Set="PartialTranslation" />
+    <UpToDateCheckOutput Include="$(TargetDir)fr-SC\$(CmdPalExtensionAssemblyName).resources.dll" Set="PartialTranslation" />
   </ItemGroup>
+
+  <!-- Load the fixture through the extension's ResourceManager without adding a product locale. -->
+  <Target Name="BuildPartialTranslation" AfterTargets="CopyFilesToOutputDirectory"
+          Inputs="$(MSBuildProjectFullPath);Localization\Strings.fr-SC.resx;$(TargetDir)$(CmdPalExtensionAssemblyName).dll"
+          Outputs="$(TargetDir)fr-SC\$(CmdPalExtensionAssemblyName).resources.dll">
+    <PropertyGroup>
+      <_TranslationResources>$(IntermediateOutputPath)JPSoftworks.TimersExtension.Resources.Strings.fr-SC.resources</_TranslationResources>
+      <_TranslationAssemblyInfo>$(IntermediateOutputPath)PartialTranslation.AssemblyInfo.cs</_TranslationAssemblyInfo>
+    </PropertyGroup>
+    <MakeDir Directories="$(TargetDir)fr-SC" />
+    <GenerateResource Sources="Localization\Strings.fr-SC.resx" OutputResources="$(_TranslationResources)" ExecuteAsTool="false" />
+    <GetAssemblyIdentity AssemblyFiles="$(TargetDir)$(CmdPalExtensionAssemblyName).dll">
+      <Output TaskParameter="Assemblies" ItemName="_ExtensionIdentity" />
+    </GetAssemblyIdentity>
+    <ItemGroup>
+      <_TranslationAttribute Include="System.Reflection.AssemblyCultureAttribute">
+        <_Parameter1>fr-SC</_Parameter1>
+      </_TranslationAttribute>
+      <_TranslationAttribute Include="System.Reflection.AssemblyVersionAttribute">
+        <_Parameter1>%(_ExtensionIdentity.Version)</_Parameter1>
+      </_TranslationAttribute>
+    </ItemGroup>
+    <WriteCodeFragment Language="C#" AssemblyAttributes="@(_TranslationAttribute)" OutputFile="$(_TranslationAssemblyInfo)" />
+    <Csc Sources="$(_TranslationAssemblyInfo)" Resources="$(_TranslationResources)" References="@(ReferencePath)"
+         NoConfig="true" NoStandardLib="true" TargetType="Library"
+         OutputAssembly="$(TargetDir)fr-SC\$(CmdPalExtensionAssemblyName).resources.dll">
+      <Output TaskParameter="OutputAssembly" ItemName="FileWrites" />
+    </Csc>
+  </Target>
 </Project>

@@ -530,6 +530,24 @@ namespace JPSoftworks.TimersExtension.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0}:{1:D2}:{2:D2}.
+        /// </summary>
+        internal static string Duration_ClockHoursMinutesSecondsFormat {
+            get {
+                return ResourceManager.GetString("Duration.ClockHoursMinutesSecondsFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0:D2}:{1:D2}.
+        /// </summary>
+        internal static string Duration_ClockMinutesSecondsFormat {
+            get {
+                return ResourceManager.GetString("Duration.ClockMinutesSecondsFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to {0}h.
         /// </summary>
         internal static string Duration_HoursFormat {
@@ -574,6 +592,15 @@ namespace JPSoftworks.TimersExtension.Resources {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to {0}{1}{2:D2}.
+        /// </summary>
+        internal static string Duration_StopwatchTimeFormat {
+            get {
+                return ResourceManager.GetString("Duration.StopwatchTimeFormat", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Started &quot;{0}&quot; for {1}.
         /// </summary>
@@ -1039,6 +1066,15 @@ namespace JPSoftworks.TimersExtension.Resources {
         internal static string Parsing_StopwatchPrefixes {
             get {
                 return ResourceManager.GetString("Parsing.StopwatchPrefixes", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to start timer.
+        /// </summary>
+        internal static string Parsing_TimerPrefixes {
+            get {
+                return ResourceManager.GetString("Parsing.TimerPrefixes", resourceCulture);
             }
         }
 
