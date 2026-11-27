@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 256 256" role="img" aria-label="Timers hourglass">
+  <defs>
+    <linearGradient id="frame" x1="43" y1="15" x2="216" y2="241" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#11b9a8"/>
+      <stop offset=".52" stop-color="#128ebc"/>
+      <stop offset="1" stop-color="#275be6"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="70" y1="25" x2="185" y2="233" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff"/>
+      <stop offset="1" stop-color="#dce5ff"/>
+    </linearGradient>
+    <linearGradient id="sand" x1="82" y1="61" x2="177" y2="212" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffc72e"/>
+      <stop offset=".55" stop-color="#ff992b"/>
+      <stop offset="1" stop-color="#ff6b4d"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#frame)" d="M65 11h126c16 0 29 13 29 29 0 30-13 51-35 70l-19 16q-2 2 0 4l19 16c22 19 35 40 35 70 0 16-13 29-29 29H65c-16 0-29-13-29-29 0-30 13-51 35-70l19-16q2-2 0-4l-19-16C49 91 36 70 36 40c0-16 13-29 29-29Z"/>
+  <path fill="url(#glass)" d="M65 28h126c7 0 12 5 12 12 0 24-10 41-29 57l-19 16a19 19 0 0 0 0 30l19 16c19 16 29 33 29 57 0 7-5 12-12 12H65c-7 0-12-5-12-12 0-24 10-41 29-57l19-16a19 19 0 0 0 0-30L82 97C63 81 53 64 53 40c0-7 5-12 12-12Z"/>
+  <path fill="url(#sand)" d="M72 58c35-4 77 4 112 0-4 12-12 21-23 31l-18 15c-7 6-10 14-10 24v18c0 7 3 13 8 17l25 18c11 8 18 19 20 31H70c2-12 9-23 20-31l25-18c5-4 8-10 8-17v-18c0-10-3-18-10-24L95 89C84 79 76 70 72 58Z"/>
+</svg>

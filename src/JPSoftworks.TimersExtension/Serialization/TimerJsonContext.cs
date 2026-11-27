@@ -1,3 +1,9 @@
+// ------------------------------------------------------------
+//
+// Copyright (c) Jiří Polášek. All rights reserved.
+//
+// ------------------------------------------------------------
+
 using System.Text.Json.Serialization;
 using JPSoftworks.TimersExtension.Models;
 

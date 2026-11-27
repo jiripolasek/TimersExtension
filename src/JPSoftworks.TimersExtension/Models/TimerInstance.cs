@@ -1,10 +1,19 @@
+// ------------------------------------------------------------
+//
+// Copyright (c) Jiří Polášek. All rights reserved.
+//
+// ------------------------------------------------------------
+
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
+using JPSoftworks.TimersExtension.Services;
 
 namespace JPSoftworks.TimersExtension.Models;
 
-public sealed class TimerInstance : INotifyPropertyChanged
+public sealed partial class TimerInstance : INotifyPropertyChanged
 {
+    public event PropertyChangedEventHandler? PropertyChanged;
     private string _name = string.Empty;
     private TimeSpan _duration;
     private DateTimeOffset? _startedAt;
@@ -13,168 +22,259 @@ public sealed class TimerInstance : INotifyPropertyChanged
     private TimerState _state = TimerState.Pending;
     private bool _isTemplate;
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-
     public Guid Id { get; set; } = Guid.NewGuid();
 
     public string Name
     {
-        get => _name;
-        set => SetProperty(ref _name, value);
+        get => this._name;
+        set => this.SetProperty(ref this._name, value);
     }
 
     public TimeSpan Duration
     {
-        get => _duration;
+        get => this._duration;
         set
         {
-            if (SetProperty(ref _duration, value))
+            if (this.SetProperty(ref this._duration, value))
             {
-                OnPropertyChanged(nameof(Remaining));
+                this.OnPropertyChanged(nameof(this.Remaining));
             }
         }
     }
+
+    [JsonInclude]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    internal TimeSpan? SnoozeDuration { get; set; }
+
+    [JsonInclude]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    internal TimeSpan? RunDuration { get; set; }
+
+    [JsonInclude]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    internal string? AlarmSoundId { get; set; }
+
+    internal TimeSpan CountdownDuration => this.RunDuration ?? this.SnoozeDuration ?? this.Duration;
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public DateTimeOffset? StartedAt
     {
-        get => _startedAt;
+        get => this._startedAt;
         set
         {
-            if (SetProperty(ref _startedAt, value))
+            if (this.SetProperty(ref this._startedAt, value))
             {
-                OnPropertyChanged(nameof(ExpectedEnd));
-                OnPropertyChanged(nameof(Remaining));
+                this.OnPropertyChanged(nameof(this.ExpectedEnd));
+                this.OnPropertyChanged(nameof(this.Remaining));
             }
         }
     }
 
     public DateTimeOffset? PausedAt
     {
-        get => _pausedAt;
-        set => SetProperty(ref _pausedAt, value);
+        get => this._pausedAt;
+        set => this.SetProperty(ref this._pausedAt, value);
     }
 
     public TimeSpan ElapsedBeforePause
     {
-        get => _elapsedBeforePause;
+        get => this._elapsedBeforePause;
         set
         {
-            if (SetProperty(ref _elapsedBeforePause, value))
+            if (this.SetProperty(ref this._elapsedBeforePause, value))
             {
-                OnPropertyChanged(nameof(ExpectedEnd));
-                OnPropertyChanged(nameof(Remaining));
+                this.OnPropertyChanged(nameof(this.ExpectedEnd));
+                this.OnPropertyChanged(nameof(this.Remaining));
             }
         }
     }
 
     public TimerState State
     {
-        get => _state;
+        get => this._state;
         set
         {
-            if (SetProperty(ref _state, value))
+            if (this.SetProperty(ref this._state, value))
             {
-                OnPropertyChanged(nameof(ExpectedEnd));
-                OnPropertyChanged(nameof(Remaining));
+                this.OnPropertyChanged(nameof(this.ExpectedEnd));
+                this.OnPropertyChanged(nameof(this.Remaining));
             }
         }
     }
 
     public bool IsTemplate
     {
-        get => _isTemplate;
-        set => SetProperty(ref _isTemplate, value);
+        get => this._isTemplate;
+        set => this.SetProperty(ref this._isTemplate, value);
     }
 
-    public DateTimeOffset? ExpectedEnd => State == TimerState.Running && StartedAt is { } start
-        ? start + Duration - ElapsedBeforePause
-        : null;
+    public DateTimeOffset? ExpectedEnd
+    {
+        get
+        {
+            if (this.State != TimerState.Running || this.StartedAt is not { } start)
+            {
+                return null;
+            }
+
+            try
+            {
+                return start + (this.CountdownDuration - this.ElapsedBeforePause);
+            }
+            catch (Exception ex) when (ex is ArgumentOutOfRangeException or OverflowException)
+            {
+                // Keep older out-of-range timers readable and serializable.
+                return null;
+            }
+        }
+    }
 
     public TimeSpan Remaining
     {
         get
         {
-            if (State == TimerState.Finished)
+            if (this.State == TimerState.Finished)
             {
                 return TimeSpan.Zero;
             }
 
-            if (State == TimerState.Pending)
+            if (this.State == TimerState.Pending)
             {
-                return Duration;
+                return this.Duration;
             }
 
             var now = DateTimeOffset.UtcNow;
-            var elapsed = State switch
+            var elapsed = this.State switch
             {
-                TimerState.Running when StartedAt is { } started => (now - started) + ElapsedBeforePause,
-                _ => ElapsedBeforePause
+                TimerState.Running when this.StartedAt is { } started => now - started + this.ElapsedBeforePause,
+                _ => this.ElapsedBeforePause
             };
 
-            var remaining = Duration - elapsed;
+            var remaining = this.CountdownDuration - elapsed;
             return remaining < TimeSpan.Zero ? TimeSpan.Zero : remaining;
         }
+    }
+
+    internal static bool IsValidDuration(TimeSpan duration, DateTimeOffset start)
+    {
+        return duration > TimeSpan.Zero
+               && duration.Ticks <= DateTime.MaxValue.Ticks - Math.Max(start.Ticks, start.UtcTicks);
     }
 
     // Helper to trigger logic dependent on time passing
     public void NotifyTimeChanged()
     {
-        OnPropertyChanged(nameof(Remaining));
+        this.OnPropertyChanged(nameof(this.Remaining));
     }
 
-    public void TransitionToPaused(DateTimeOffset pausedAt, TimeSpan elapsedBeforePause)
+    public void TransitionToPaused(DateTimeOffset pausedAt, TimeSpan elapsedBeforePause) =>
+        this.TransitionToPaused(pausedAt, elapsedBeforePause, true);
+
+    internal void TransitionToPaused(DateTimeOffset pausedAt, TimeSpan elapsedBeforePause, bool notify)
     {
-        _state = TimerState.Paused;
-        _pausedAt = pausedAt;
-        _elapsedBeforePause = elapsedBeforePause;
-        NotifyStateChanged();
+        this._state = TimerState.Paused;
+        this._pausedAt = pausedAt;
+        this._elapsedBeforePause = elapsedBeforePause;
+        if (notify)
+        {
+            this.NotifyStateChanged();
+        }
     }
 
-    public void TransitionToRunning(DateTimeOffset startedAt)
+    public void TransitionToRunning(DateTimeOffset startedAt) => this.TransitionToRunning(startedAt, true);
+
+    internal void TransitionToRunning(DateTimeOffset startedAt, bool notify)
     {
-        _state = TimerState.Running;
-        _startedAt = startedAt;
-        _pausedAt = null;
-        NotifyStateChanged();
+        this._state = TimerState.Running;
+        this._startedAt = startedAt;
+        this._pausedAt = null;
+        if (notify)
+        {
+            this.NotifyStateChanged();
+        }
     }
 
-    public void TransitionToRestarted(DateTimeOffset startedAt)
+    public void TransitionToRestarted(DateTimeOffset startedAt) => this.TransitionToRestarted(startedAt, true);
+
+    internal void TransitionToRestarted(DateTimeOffset startedAt, bool notify, TimeSpan? snoozeDuration = null)
     {
-        _state = TimerState.Running;
-        _startedAt = startedAt;
-        _pausedAt = null;
-        _elapsedBeforePause = TimeSpan.Zero;
-        NotifyStateChanged();
+        this._state = TimerState.Running;
+        this._startedAt = startedAt;
+        this._pausedAt = null;
+        this._elapsedBeforePause = TimeSpan.Zero;
+        this.SnoozeDuration = snoozeDuration;
+        this.RunDuration = null;
+        if (notify)
+        {
+            this.NotifyStateChanged();
+        }
     }
 
-    public void TransitionToCancelled(DateTimeOffset pausedAt)
+    public void TransitionToCancelled(DateTimeOffset pausedAt, TimeSpan elapsedBeforePause) =>
+        this.TransitionToCancelled(pausedAt, elapsedBeforePause, true);
+
+    internal void TransitionToCancelled(DateTimeOffset pausedAt, TimeSpan elapsedBeforePause, bool notify)
     {
-        _state = TimerState.Cancelled;
-        _pausedAt = pausedAt;
-        NotifyStateChanged();
+        this._state = TimerState.Cancelled;
+        this._pausedAt = pausedAt;
+        this._elapsedBeforePause = elapsedBeforePause;
+        if (notify)
+        {
+            this.NotifyStateChanged();
+        }
     }
 
-    public void TransitionToFinished(DateTimeOffset pausedAt, TimeSpan elapsedBeforePause)
+    public void TransitionToFinished(DateTimeOffset pausedAt, TimeSpan elapsedBeforePause) =>
+        this.TransitionToFinished(pausedAt, elapsedBeforePause, true);
+
+    internal void TransitionToFinished(DateTimeOffset pausedAt, TimeSpan elapsedBeforePause, bool notify)
     {
-        _state = TimerState.Finished;
-        _pausedAt = pausedAt;
-        _elapsedBeforePause = elapsedBeforePause;
-        NotifyStateChanged();
+        this._state = TimerState.Finished;
+        this._pausedAt = pausedAt;
+        this._elapsedBeforePause = elapsedBeforePause;
+        if (notify)
+        {
+            this.NotifyStateChanged();
+        }
     }
 
-    private void NotifyStateChanged()
+    internal TimerInstance CreatePersistenceSnapshot() => new()
     {
-        OnPropertyChanged(nameof(State));
-        OnPropertyChanged(nameof(StartedAt));
-        OnPropertyChanged(nameof(PausedAt));
-        OnPropertyChanged(nameof(ElapsedBeforePause));
-        OnPropertyChanged(nameof(ExpectedEnd));
-        OnPropertyChanged(nameof(Remaining));
+        Id = this.Id,
+        Name = this._name,
+        Duration = this._duration,
+        SnoozeDuration = this.SnoozeDuration,
+        RunDuration = this.RunDuration,
+        AlarmSoundId = this.AlarmSoundId,
+        CreatedAt = this.CreatedAt,
+        StartedAt = this._startedAt,
+        PausedAt = this._pausedAt,
+        ElapsedBeforePause = this._elapsedBeforePause,
+        State = this._state,
+        IsTemplate = this._isTemplate
+    };
+
+    internal void NotifyStateChanged()
+    {
+        this.OnPropertyChanged(nameof(this.State));
+        this.OnPropertyChanged(nameof(this.StartedAt));
+        this.OnPropertyChanged(nameof(this.PausedAt));
+        this.OnPropertyChanged(nameof(this.ElapsedBeforePause));
+        this.NotifyCountdownDurationChanged();
     }
 
-    private void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    internal void NotifyCountdownDurationChanged()
+    {
+        this.OnPropertyChanged(nameof(this.CountdownDuration));
+        this.OnPropertyChanged(nameof(this.ExpectedEnd));
+        this.OnPropertyChanged(nameof(this.Remaining));
+    }
+
+    internal void NotifyAlarmSoundChanged() => this.OnPropertyChanged(nameof(this.AlarmSoundId));
+
+    private void OnPropertyChanged(string propertyName) =>
+        NotificationQueue.RaisePropertyChanged(this.PropertyChanged, this, propertyName);
 
     private bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
@@ -184,7 +284,7 @@ public sealed class TimerInstance : INotifyPropertyChanged
         }
 
         field = value;
-        OnPropertyChanged(propertyName!);
+        this.OnPropertyChanged(propertyName!);
         return true;
     }
 }

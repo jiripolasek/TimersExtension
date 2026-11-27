@@ -1,125 +1,188 @@
+// ------------------------------------------------------------
+//
+// Copyright (c) Jiří Polášek. All rights reserved.
+//
+// ------------------------------------------------------------
+
 using System.ComponentModel;
+using JPSoftworks.TimersExtension.Commands;
 using JPSoftworks.TimersExtension.Models;
+using JPSoftworks.TimersExtension.Resources;
 using JPSoftworks.TimersExtension.Services;
 
 namespace JPSoftworks.TimersExtension.Pages;
 
-internal sealed partial class TimerInstanceListItem : ListItem
+internal sealed partial class TimerInstanceListItem : ListItem, IDisposable
 {
     private readonly TimerInstance _timer;
     private readonly TimerScheduler _scheduler;
-    private readonly AlarmService _alarmService;
 
     private TimerState _oldState;
-    private bool _uiUpdatesEnabled = true;
+    private bool _uiUpdatesEnabled;
 
-    public TimerInstanceListItem(TimerInstance timer, TimerScheduler scheduler, AlarmService alarmService)
+    public TimerInstanceListItem(TimerInstance timer, TimerScheduler scheduler)
     {
-        _timer = timer;
-        _scheduler = scheduler;
-        _alarmService = alarmService;
-        _timer.PropertyChanged += Timer_PropertyChanged;
-        UpdateInfo();
+        this._timer = timer;
+        this._scheduler = scheduler;
+        TimerServices.Settings.TimerPresentationChanged += this.Settings_TimerPresentationChanged;
+        this.RefreshOpenCommand();
+        this.UpdateInfo();
     }
 
     public void SetUIUpdatesEnabled(bool enabled)
     {
-        if (enabled == _uiUpdatesEnabled)
+        if (enabled == this._uiUpdatesEnabled)
         {
             return;
         }
 
-        _uiUpdatesEnabled = enabled;
+        this._uiUpdatesEnabled = enabled;
 
         if (enabled)
         {
-            _timer.PropertyChanged += Timer_PropertyChanged;
-            UpdateInfo();
+            this.RefreshOpenCommand();
+            this._timer.PropertyChanged += this.Timer_PropertyChanged;
+            this.UpdateInfo();
         }
         else
         {
-            _timer.PropertyChanged -= Timer_PropertyChanged;
+            this._timer.PropertyChanged -= this.Timer_PropertyChanged;
         }
     }
 
     private void Timer_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        UpdateInfo();
+        if (e.PropertyName == nameof(TimerInstance.Remaining))
+        {
+            this.UpdateTime();
+        }
+        else
+        {
+            this.UpdateInfo();
+        }
+    }
+
+    private void Settings_TimerPresentationChanged(object? sender, EventArgs e)
+    {
+        this.UpdateInfo();
+    }
+
+    private void RefreshOpenCommand()
+    {
+        this.Command = new TimerDetailPage(this._timer, this._scheduler);
     }
 
     private void UpdateInfo()
     {
-        Title = _timer.Name;
-        Subtitle = $"Left {_timer.Remaining:hh\\:mm\\:ss} of {_timer.Duration:hh\\:mm\\:ss} | Ends at {_timer.ExpectedEnd}";
+        this.Title = LabelFormatter.FormatTimerName(this._timer.Name, this._timer.Duration);
 
-        if (_oldState != _timer.State)
+        var state = this._timer.State;
+        if (this._oldState != state)
         {
-            var pauseCommand = new AnonymousCommand(() =>
+            var pauseCommand = new AnonymousCommand(() => this._scheduler.Pause(this._timer.Id))
             {
-                _alarmService.StopAlarm();
-                _scheduler.Pause(_timer.Id);
-            })
-            { Name = "Pause", Icon = new IconInfo("\uE769"), Result = CommandResult.KeepOpen() };
+                Name = Strings.Action_Pause, Icon = new IconInfo("\uE769"), Result = CommandResult.KeepOpen()
+            };
 
-            var resumeCommand = new AnonymousCommand(() =>
+            var resumeCommand = new AnonymousCommand(() => this._scheduler.Resume(this._timer.Id))
             {
-                _alarmService.StopAlarm();
-                _scheduler.Resume(_timer.Id);
-            })
-            { Name = "Resume", Icon = new IconInfo("\uE768"), Result = CommandResult.KeepOpen() };
-            var stopCommand = new AnonymousCommand(() =>
+                Name = Strings.Action_Resume, Icon = new IconInfo("\uE768"), Result = CommandResult.KeepOpen()
+            };
+            var stopCommand = new AnonymousCommand(() => this._scheduler.Stop(this._timer.Id))
             {
-                _alarmService.StopAlarm();
-                _scheduler.Stop(_timer.Id);
-            })
-            { Name = "Stop", Icon = new IconInfo("\uE71A"), Result = CommandResult.KeepOpen() };
-            var restartCommand = new AnonymousCommand(() =>
+                Name = Strings.Action_Stop, Icon = new IconInfo("\uE71A"), Result = CommandResult.KeepOpen()
+            };
+            var restartCommand = new AnonymousCommand(() => this._scheduler.Restart(this._timer.Id))
             {
-                _alarmService.StopAlarm();
-                _scheduler.Restart(_timer.Id);
-            })
-            { Name = "Restart", Icon = new IconInfo("\uE777"), Result = CommandResult.KeepOpen() };
-            var removeCommand = new AnonymousCommand(() =>
+                Name = state == TimerState.Finished ? Strings.Action_StartAgain : Strings.Action_Restart,
+                Icon = new IconInfo("\uE777"),
+                Result = CommandResult.KeepOpen()
+            };
+            var deleteCommand = new AnonymousCommand(() => this._scheduler.RemoveTimer(this._timer.Id))
             {
-                _alarmService.StopAlarm();
-                _scheduler.RemoveTimer(_timer.Id);
-            })
-            { Name = "Remove", Icon = new IconInfo("\uE74D"), Result = CommandResult.KeepOpen() };
+                Name = Strings.Action_Delete, Icon = new IconInfo("\uE74D"), Result = CommandResult.KeepOpen()
+            };
+            var confirmedDeleteCommand = new DeletionConfirmationCommand(
+                deleteCommand,
+                Strings.Confirm_DeleteTimer_Title,
+                ResourceFormatter.Format(Strings.Confirm_DeleteTimer_Description,
+                    LabelFormatter.FormatTimerName(this._timer.Name, this._timer.Duration)));
 
-            switch (_timer.State)
+            IContextItem[] actions;
+            switch (state)
             {
                 case TimerState.Running:
-                    Icon = Icons.RunningTimer;
-                    Command = pauseCommand;
-                    MoreCommands = [new CommandContextItem(stopCommand), new CommandContextItem(restartCommand)];
-                    Tags = [new Tag("Running") { Background = new OptionalColor(true, new Color(56, 177, 131, 80)), Foreground = new OptionalColor(true, new Color(80, 253, 187, 255)) }];
+                    actions =
+                    [
+                        new CommandContextItem(pauseCommand) { RequestedShortcut = Chords.Pause },
+                        new CommandContextItem(stopCommand) { RequestedShortcut = Chords.Stop },
+                        new CommandContextItem(restartCommand) { RequestedShortcut = Chords.Restart }
+                    ];
+                    this.Tags = [StateTags.CreateRunning()];
                     break;
                 case TimerState.Paused:
-                    Icon = Icons.PausedTimer;
-                    Command = resumeCommand;
-                    MoreCommands = [new CommandContextItem(stopCommand), new CommandContextItem(restartCommand)];
-                    Tags = [new Tag("Paused") { Background = new OptionalColor(true, new Color(230, 160, 0, 80)) }];
+                    actions =
+                    [
+                        new CommandContextItem(resumeCommand) { RequestedShortcut = Chords.Resume },
+                        new CommandContextItem(stopCommand) { RequestedShortcut = Chords.Stop },
+                        new CommandContextItem(restartCommand) { RequestedShortcut = Chords.Restart }
+                    ];
+                    this.Tags = [StateTags.CreatePaused()];
                     break;
                 case TimerState.Finished:
-                    Icon = Icons.FinishedTimer;
-                    Command = removeCommand;
-                    MoreCommands = [new CommandContextItem(restartCommand)];
-                    Tags = [new Tag("Finished") { Background = new OptionalColor(true, new Color(0, 80, 160, 80)) }];
+                    actions = [new CommandContextItem(restartCommand) { RequestedShortcut = Chords.Restart }];
+                    this.Tags = [StateTags.CreateFinished()];
                     break;
                 case TimerState.Cancelled:
-                    Icon = Icons.CancelledTimer;
-                    Command = removeCommand;
-                    MoreCommands = [new CommandContextItem(restartCommand)];
-                    Tags = [new Tag("Cancelled") { Background = new OptionalColor(true, new Color(180, 10, 0, 80)) }];
+                    actions = [new CommandContextItem(restartCommand) { RequestedShortcut = Chords.Restart }];
+                    this.Tags =
+                    [
+                        new Tag(Strings.State_Stopped)
+                        {
+                            Background = new OptionalColor(true, new Color(180, 10, 0, 80))
+                        }
+                    ];
                     break;
                 default:
-                    Icon = Icons.GenericTimer;
-                    Command = null!;
-                    MoreCommands = [new CommandContextItem(removeCommand)];
+                    actions = [];
                     break;
             }
 
-            _oldState = _timer.State;
+            this.MoreCommands =
+            [
+                .. actions,
+                .. AddTimerTimeCommand.CreateMenuGroup(this._timer.Id, state, this._scheduler),
+                new CommandContextItem(confirmedDeleteCommand) { RequestedShortcut = Chords.Delete }
+            ];
+            this._oldState = state;
         }
+
+        this.UpdateTime();
+    }
+
+    private void UpdateTime()
+    {
+        this.Subtitle = LabelFormatter.FormatTimerListSubtitle(this._timer,
+            TimerServices.Settings.ShouldShowTimerSeconds(this._timer.Remaining));
+        this.Icon = this.GetIconForCurrentState();
+    }
+
+    private IconInfo GetIconForCurrentState() =>
+        this._timer.State switch
+        {
+            TimerState.Running => TimerProgressIconHelper.GetRunningTimerIcon(this._timer.CountdownDuration,
+                this._timer.Remaining,
+                TimerServices.Settings.AnimatedTimerIcons),
+            TimerState.Paused => Icons.PausedTimer,
+            TimerState.Finished => Icons.FinishedTimer,
+            TimerState.Cancelled => Icons.CancelledTimer,
+            _ => Icons.GenericTimer
+        };
+
+    public void Dispose()
+    {
+        this._timer.PropertyChanged -= this.Timer_PropertyChanged;
+        TimerServices.Settings.TimerPresentationChanged -= this.Settings_TimerPresentationChanged;
+        this._uiUpdatesEnabled = false;
     }
 }

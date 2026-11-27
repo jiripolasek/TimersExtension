@@ -1,4 +1,8 @@
-// Global using directives
+// ------------------------------------------------------------
+//
+// Copyright (c) Jiří Polášek. All rights reserved.
+//
+// ------------------------------------------------------------
 
 global using System;
 global using System.Collections.Generic;

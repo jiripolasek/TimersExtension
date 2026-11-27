@@ -1,0 +1,595 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Action.AddMinutesFormat" xml:space="preserve">
+    <value>Add {0} min</value>
+  </data>
+  <data name="Action.Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Action.ClearAllStopwatches" xml:space="preserve">
+    <value>Clear all stopwatches</value>
+  </data>
+  <data name="Action.ClearAllTimers" xml:space="preserve">
+    <value>Clear all timers</value>
+  </data>
+  <data name="Action.CopyElapsedTime" xml:space="preserve">
+    <value>Copy elapsed time</value>
+  </data>
+  <data name="Action.Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Action.Lap" xml:space="preserve">
+    <value>Lap</value>
+  </data>
+  <data name="Action.NewTimer" xml:space="preserve">
+    <value>New timer</value>
+  </data>
+  <data name="Action.Pause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="Action.Reset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="Action.RepeatLastTimer" xml:space="preserve">
+    <value>Repeat last timer</value>
+  </data>
+  <data name="Action.Restart" xml:space="preserve">
+    <value>Restart</value>
+  </data>
+  <data name="Action.Resume" xml:space="preserve">
+    <value>Resume</value>
+  </data>
+  <data name="Action.Start" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Action.StartAgain" xml:space="preserve">
+    <value>Start again</value>
+  </data>
+  <data name="Action.StartNewStopwatch" xml:space="preserve">
+    <value>Start new stopwatch</value>
+  </data>
+  <data name="Action.StartStopwatch" xml:space="preserve">
+    <value>Start stopwatch</value>
+  </data>
+  <data name="Action.StartTimer" xml:space="preserve">
+    <value>Start timer</value>
+  </data>
+  <data name="Action.SnoozeFiveMinutes" xml:space="preserve">
+    <value>Snooze 5 minutes</value>
+  </data>
+  <data name="Action.Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="Action.StopAllStopwatches" xml:space="preserve">
+    <value>Stop all stopwatches</value>
+  </data>
+  <data name="Action.StopAllTimers" xml:space="preserve">
+    <value>Stop all timers</value>
+  </data>
+  <data name="Alarm.MessageFormat" xml:space="preserve">
+    <value>{0}
+Finished at {1}</value>
+  </data>
+  <data name="Alarm.MissedSnoozeTitleFormat" xml:space="preserve">
+    <value>Missed snooze for {0}</value>
+  </data>
+  <data name="Alarm.MissedTitleFormat" xml:space="preserve">
+    <value>Missed timer: {0}</value>
+  </data>
+  <data name="Alarm.SnoozeTitleFormat" xml:space="preserve">
+    <value>Snooze finished for {0}</value>
+  </data>
+  <data name="Alarm.TitleFormat" xml:space="preserve">
+    <value>{0} done</value>
+  </data>
+  <data name="AlarmSound.Aurora" xml:space="preserve">
+    <value>Aurora</value>
+  </data>
+  <data name="AlarmSound.BrightBell" xml:space="preserve">
+    <value>Bright bell</value>
+  </data>
+  <data name="AlarmSound.ClassicChimes" xml:space="preserve">
+    <value>Classic chimes</value>
+  </data>
+  <data name="AlarmSound.DigitalPulse" xml:space="preserve">
+    <value>Digital pulse</value>
+  </data>
+  <data name="AlarmSound.GentleChime" xml:space="preserve">
+    <value>Gentle chime</value>
+  </data>
+  <data name="AlarmSound.UrgentAlert" xml:space="preserve">
+    <value>Urgent alert</value>
+  </data>
+  <data name="AlarmSound.Silent" xml:space="preserve">
+    <value>Silent (notification only)</value>
+  </data>
+  <data name="AlarmSound.UseDefault" xml:space="preserve">
+    <value>Use default sound</value>
+  </data>
+  <data name="Confirm.ClearAllStopwatches.Description" xml:space="preserve">
+    <value>This deletes every stopwatch. This action cannot be undone.</value>
+  </data>
+  <data name="Confirm.ClearAllStopwatches.Title" xml:space="preserve">
+    <value>Clear all stopwatches?</value>
+  </data>
+  <data name="Confirm.ClearAllTimers.Description" xml:space="preserve">
+    <value>This deletes every timer. This action cannot be undone.</value>
+  </data>
+  <data name="Confirm.ClearAllTimers.Title" xml:space="preserve">
+    <value>Clear all timers?</value>
+  </data>
+  <data name="Confirm.DeleteStopwatch.Description" xml:space="preserve">
+    <value>Are you sure you want to delete {0}?</value>
+  </data>
+  <data name="Confirm.DeleteStopwatch.Title" xml:space="preserve">
+    <value>Delete stopwatch?</value>
+  </data>
+  <data name="Confirm.DeleteTemplate.Description" xml:space="preserve">
+    <value>Are you sure you want to delete {0}?</value>
+  </data>
+  <data name="Confirm.DeleteTemplate.Title" xml:space="preserve">
+    <value>Delete template?</value>
+  </data>
+  <data name="Confirm.DeleteTimer.Description" xml:space="preserve">
+    <value>Are you sure you want to delete {0}?</value>
+  </data>
+  <data name="Confirm.DeleteTimer.Title" xml:space="preserve">
+    <value>Delete timer?</value>
+  </data>
+  <data name="Dock.ActiveStopwatches.Title" xml:space="preserve">
+    <value>Active stopwatches</value>
+  </data>
+  <data name="Dock.ActiveTimers.Title" xml:space="preserve">
+    <value>Active timers</value>
+  </data>
+  <data name="Dock.AllStopwatches.Title" xml:space="preserve">
+    <value>Open stopwatch list</value>
+    <comment>Label for the Dock band and button that open the Stopwatches page.</comment>
+  </data>
+  <data name="Dock.AllTimers.Title" xml:space="preserve">
+    <value>Open timer list</value>
+    <comment>Label for the Dock band and button that open the Timers page.</comment>
+  </data>
+  <data name="Dock.PausedTitleFormat" xml:space="preserve">
+    <value>Paused · {0}</value>
+  </data>
+  <data name="Dock.RecentStopwatch.Title" xml:space="preserve">
+    <value>Latest active stopwatch</value>
+    <comment>Dock band showing one stopwatch: the newest of those running or paused.</comment>
+  </data>
+  <data name="Dock.RecentTimer.Title" xml:space="preserve">
+    <value>Latest active timer</value>
+    <comment>Dock band showing one timer: the newest of those running or paused.</comment>
+  </data>
+  <data name="Duration.HoursFormat" xml:space="preserve">
+    <value>{0}h</value>
+  </data>
+  <data name="Duration.HoursMinutesFormat" xml:space="preserve">
+    <value>{0}h {1}m</value>
+  </data>
+  <data name="Duration.MinutesFormat" xml:space="preserve">
+    <value>{0}m</value>
+  </data>
+  <data name="Duration.MinutesLabelFormat" xml:space="preserve">
+    <value>{0} min</value>
+  </data>
+  <data name="Duration.SecondsFormat" xml:space="preserve">
+    <value>{0}s</value>
+  </data>
+  <data name="Preview.EndsAtFormat" xml:space="preserve">
+    <value>Ends at {0}</value>
+  </data>
+  <data name="Preview.IfStartedAtFormat" xml:space="preserve">
+    <value>{0} if started at {1}</value>
+  </data>
+  <data name="Preview.TimerActionAndTimingFormat" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="Fallback.StartedStopwatch" xml:space="preserve">
+    <value>Started stopwatch</value>
+  </data>
+  <data name="Fallback.StartedTimerFormat" xml:space="preserve">
+    <value>Started a {0} timer</value>
+  </data>
+  <data name="Fallback.StartedNamedTimerFormat" xml:space="preserve">
+    <value>Started "{0}" for {1}</value>
+  </data>
+  <data name="Fallback.StartedNamedTimerUntilFormat" xml:space="preserve">
+    <value>Started "{0}" until {1}</value>
+  </data>
+  <data name="Fallback.StartedTimerUntilFormat" xml:space="preserve">
+    <value>Started a timer until {0}</value>
+  </data>
+  <data name="Fallback.StartStopwatchNamedFormat" xml:space="preserve">
+    <value>Start stopwatch "{0}"</value>
+  </data>
+  <data name="Fallback.StartTimerForFormat" xml:space="preserve">
+    <value>Start timer for {0}</value>
+  </data>
+  <data name="Fallback.StartTimerUntilFormat" xml:space="preserve">
+    <value>Start timer until {0}</value>
+  </data>
+  <data name="Fallback.TypeDurationMessage" xml:space="preserve">
+    <value>Type a duration such as '10m' or a finish time such as 'until 2300' or 'until 23:00'. You can add a name.</value>
+  </data>
+  <data name="Fallback.TypeDurationTitle" xml:space="preserve">
+    <value>Type a duration or end time to start a timer</value>
+  </data>
+  <data name="Form.DurationLabel" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="Form.DurationHint" xml:space="preserve">
+    <value>For example, 5m, 1h 30m, or 00:05:00.</value>
+    <comment>Examples of accepted countdown durations, including hours:minutes:seconds.</comment>
+  </data>
+  <data name="Form.DurationOrEndTimeHint" xml:space="preserve">
+    <value>For example, 5m, 1h 30m, 00:05:00, or until 11:00.</value>
+    <comment>Countdown examples. The last example uses the local end-time keyword from Parsing.EndTimePattern.</comment>
+  </data>
+  <data name="Form.DurationOrEndTimeLabel" xml:space="preserve">
+    <value>Duration or end time</value>
+  </data>
+  <data name="Form.DurationOrEndTimeRequired" xml:space="preserve">
+    <value>Enter a duration or end time.</value>
+  </data>
+  <data name="Form.EndTimeLabel" xml:space="preserve">
+    <value>End time picker (optional, overrides the text above)</value>
+  </data>
+  <data name="Form.InvalidDurationMessage" xml:space="preserve">
+    <value>Enter a positive duration such as 5m or 1h 30m.</value>
+  </data>
+  <data name="Form.InvalidTimerTimingMessage" xml:space="preserve">
+    <value>Enter a duration such as 5m or an end time such as until 11:00.</value>
+    <comment>The end-time example uses the local keyword from Parsing.EndTimePattern.</comment>
+  </data>
+  <data name="Form.InvalidDurationError" xml:space="preserve">
+    <value>Enter a duration.</value>
+  </data>
+  <data name="Form.InvalidEndTimeMessage" xml:space="preserve">
+    <value>Choose a valid local end time or clear the picker to use the text above.</value>
+  </data>
+  <data name="Form.EndTimeTemplateMessage" xml:space="preserve">
+    <value>Templates use a fixed duration. Use a duration without an end time or turn off Save as template.</value>
+  </data>
+  <data name="Form.NameLabel" xml:space="preserve">
+    <value>Name (optional)</value>
+  </data>
+  <data name="Form.ToggleSaveAsTemplate" xml:space="preserve">
+    <value>Save as template</value>
+  </data>
+  <data name="Filter.All" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="Label.CurrentLap" xml:space="preserve">
+    <value>Current lap</value>
+  </data>
+  <data name="Label.DefaultStopwatchName" xml:space="preserve">
+    <value>Stopwatch</value>
+  </data>
+  <data name="Label.DefaultTimerNameFormat" xml:space="preserve">
+    <value>Timer {0}</value>
+  </data>
+  <data name="Label.Duration" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="Label.Elapsed" xml:space="preserve">
+    <value>Elapsed</value>
+  </data>
+  <data name="Label.Laps" xml:space="preserve">
+    <value>Laps</value>
+  </data>
+  <data name="Label.SavedTemplate" xml:space="preserve">
+    <value>Saved template</value>
+  </data>
+  <data name="Label.Snooze" xml:space="preserve">
+    <value>Snooze</value>
+  </data>
+  <data name="Label.Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Label.TodayAtFormat" xml:space="preserve">
+    <value>today at {0}</value>
+    <comment>{0} is a local clock time. This phrase follows text such as "Started" or "Finished".</comment>
+  </data>
+  <data name="Label.YesterdayAtFormat" xml:space="preserve">
+    <value>yesterday at {0}</value>
+    <comment>{0} is a local clock time. This phrase follows text such as "Started" or "Finished".</comment>
+  </data>
+  <data name="Label.NameAndTimeFormat" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="Page.Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="Page.Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="Page.Details" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="Page.EditTemplate.Title" xml:space="preserve">
+    <value>Edit template</value>
+  </data>
+  <data name="Page.EditTemplate.Save" xml:space="preserve">
+    <value>Save template</value>
+  </data>
+  <data name="Page.Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="Page.Stopwatches.Title" xml:space="preserve">
+    <value>Stopwatches</value>
+  </data>
+  <data name="Page.Stopwatches.SearchPlaceholder" xml:space="preserve">
+    <value>Search stopwatches or type a name to start one</value>
+  </data>
+  <data name="Page.Timers.NoMatches" xml:space="preserve">
+    <value>No matching timers</value>
+  </data>
+  <data name="Page.Timers.SearchPlaceholder" xml:space="preserve">
+    <value>Try tea 4m or search timers</value>
+  </data>
+  <data name="Page.Timers.Title" xml:space="preserve">
+    <value>Timers</value>
+  </data>
+  <data name="Provider.DisplayName" xml:space="preserve">
+    <value>Timers</value>
+  </data>
+  <data name="Section.SavedTemplates" xml:space="preserve">
+    <value>Saved templates</value>
+  </data>
+  <data name="Setting.ConfirmClearAll.Description" xml:space="preserve">
+    <value>Show a confirmation before deleting every timer or every stopwatch in a list.</value>
+  </data>
+  <data name="Setting.AlarmSound.Description" xml:space="preserve">
+    <value>Choose the sound used when a timer finishes. Saving a new audible choice plays a short preview.</value>
+  </data>
+  <data name="Setting.AlarmSound.Title" xml:space="preserve">
+    <value>Alarm sound</value>
+  </data>
+  <data name="Setting.AlarmVolume.Description" xml:space="preserve">
+    <value>Choose the playback volume for alarm sounds and previews.</value>
+  </data>
+  <data name="Setting.AlarmVolume.Full" xml:space="preserve">
+    <value>Full (100%)</value>
+  </data>
+  <data name="Setting.AlarmVolume.High" xml:space="preserve">
+    <value>High (75%)</value>
+  </data>
+  <data name="Setting.AlarmVolume.Low" xml:space="preserve">
+    <value>Low (25%)</value>
+  </data>
+  <data name="Setting.AlarmVolume.Medium" xml:space="preserve">
+    <value>Medium (50%)</value>
+  </data>
+  <data name="Setting.AlarmVolume.Title" xml:space="preserve">
+    <value>Alarm volume</value>
+  </data>
+  <data name="Setting.AnimatedTimerIcons.Description" xml:space="preserve">
+    <value>Show progress on running timer icons.</value>
+  </data>
+  <data name="Setting.AnimatedTimerIcons.Title" xml:space="preserve">
+    <value>Animated timer icons</value>
+  </data>
+  <data name="Setting.TimerSeconds.Always" xml:space="preserve">
+    <value>Always</value>
+  </data>
+  <data name="Setting.TimerSeconds.Description" xml:space="preserve">
+    <value>Control when countdowns show seconds in timer lists, details, and dock bands.</value>
+  </data>
+  <data name="Setting.TimerSeconds.Never" xml:space="preserve">
+    <value>Never</value>
+  </data>
+  <data name="Setting.TimerSeconds.Title" xml:space="preserve">
+    <value>Show timer seconds</value>
+  </data>
+  <data name="Setting.TimerSeconds.UnderFiveMinutes" xml:space="preserve">
+    <value>Below 5 minutes</value>
+  </data>
+  <data name="Setting.TimerSeconds.UnderOneMinute" xml:space="preserve">
+    <value>Below 1 minute</value>
+  </data>
+  <data name="Setting.TimerSeconds.UnderTenMinutes" xml:space="preserve">
+    <value>Below 10 minutes</value>
+  </data>
+  <data name="Setting.ConfirmClearAll.Title" xml:space="preserve">
+    <value>Ask before clearing all timers or stopwatches</value>
+  </data>
+  <data name="Setting.ConfirmDeletion.Description" xml:space="preserve">
+    <value>Show a confirmation before deleting an individual timer, template, or stopwatch.</value>
+  </data>
+  <data name="Setting.ConfirmDeletion.Title" xml:space="preserve">
+    <value>Ask before deleting timers, templates, or stopwatches</value>
+  </data>
+  <data name="Toast.StartedTimerFormat" xml:space="preserve">
+    <value>Started {0}</value>
+  </data>
+  <data name="Toast.StartedTimerWithEndTimeFormat" xml:space="preserve">
+    <value>Started {0} · {1}</value>
+    <comment>{0} is the timer name and {1} is a localized sentence fragment with the end time.</comment>
+  </data>
+  <data name="Toast.CannotExtendTimer" xml:space="preserve">
+    <value>This timer can no longer be extended.</value>
+  </data>
+  <data name="Toast.TemplateDeleted" xml:space="preserve">
+    <value>This template was deleted before your changes could be saved.</value>
+  </data>
+  <data name="Toast.NoTimerToRepeat" xml:space="preserve">
+    <value>There is no timer to repeat yet.</value>
+  </data>
+  <data name="Toast.RepeatedTimerFormat" xml:space="preserve">
+    <value>Restarted {0}</value>
+  </data>
+  <data name="State.Finished" xml:space="preserve">
+    <value>Finished</value>
+  </data>
+  <data name="State.Paused" xml:space="preserve">
+    <value>Paused</value>
+  </data>
+  <data name="State.Ready" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="State.Running" xml:space="preserve">
+    <value>Running</value>
+  </data>
+  <data name="State.Stopped" xml:space="preserve">
+    <value>Stopped</value>
+  </data>
+  <data name="Storage.ReadOnlyMessage" xml:space="preserve">
+    <value>Some saved data could not be opened. Changes to it last for this session. Restart Command Palette once the files are available.</value>
+  </data>
+  <data name="Storage.ReadOnlyTimersMessage" xml:space="preserve">
+    <value>Running timers recovered from backup are paused. Overdue timers are shown as finished without an alarm. Changes to this data last for this session. Restart Command Palette when the files are available.</value>
+  </data>
+  <data name="Storage.ReadOnlyTitle" xml:space="preserve">
+    <value>Timers storage is read-only</value>
+  </data>
+  <data name="Stopwatch.Fastest" xml:space="preserve">
+    <value>Fastest</value>
+  </data>
+  <data name="Stopwatch.LapSubtitleFormat" xml:space="preserve">
+    <value>{0} (Total: {1})</value>
+  </data>
+  <data name="Stopwatch.LapTitleFormat" xml:space="preserve">
+    <value>Lap {0}</value>
+  </data>
+  <data name="Stopwatch.Slowest" xml:space="preserve">
+    <value>Slowest</value>
+  </data>
+  <data name="Subtitle.AdjustedDurationFormat" xml:space="preserve">
+    <value>{0} • original {1}</value>
+  </data>
+  <data name="Subtitle.StopwatchElapsedFormat" xml:space="preserve">
+    <value>{0} elapsed</value>
+  </data>
+  <data name="Subtitle.StopwatchFinishedAtFormat" xml:space="preserve">
+    <value>Finished {0}</value>
+    <comment>{0} is the local date and time when the stopwatch was finished.</comment>
+  </data>
+  <data name="Subtitle.StopwatchLastStartedAtFormat" xml:space="preserve">
+    <value>Last started {0}</value>
+    <comment>{0} is the local date and time of the most recent start or resume of an older stopwatch.</comment>
+  </data>
+  <data name="Subtitle.StopwatchPausedFormat" xml:space="preserve">
+    <value>{0} • paused</value>
+  </data>
+  <data name="Subtitle.StopwatchReadyToStart" xml:space="preserve">
+    <value>Ready to start</value>
+  </data>
+  <data name="Subtitle.StopwatchStartedAtFormat" xml:space="preserve">
+    <value>Started {0}</value>
+    <comment>{0} is the local date and time of the first start in this stopwatch run.</comment>
+  </data>
+  <data name="Subtitle.StopwatchTotalFormat" xml:space="preserve">
+    <value>{0} total</value>
+  </data>
+  <data name="Subtitle.TimerFinishedFormat" xml:space="preserve">
+    <value>Finished • {0}</value>
+  </data>
+  <data name="Subtitle.TimerLeftFormat" xml:space="preserve">
+    <value>{0} left</value>
+  </data>
+  <data name="Subtitle.TimerPausedFormat" xml:space="preserve">
+    <value>{0} • paused</value>
+  </data>
+  <data name="Subtitle.TimerRunningWithEndFormat" xml:space="preserve">
+    <value>{0} • ends {1}</value>
+  </data>
+  <data name="Subtitle.TimerSnoozeFinishedFormat" xml:space="preserve">
+    <value>Snooze finished • {0}</value>
+  </data>
+  <data name="Subtitle.TimerSnoozeFormat" xml:space="preserve">
+    <value>Snooze • {0}</value>
+  </data>
+  <data name="Subtitle.TimerStoppedFormat" xml:space="preserve">
+    <value>Stopped • {0}</value>
+  </data>
+  <data name="Parsing.HourAliases" xml:space="preserve">
+    <value>h|hr|hour|hours</value>
+    <comment>Accepted hour units, separated by |. Translate abbreviations and singular/plural forms. English aliases remain available.</comment>
+  </data>
+  <data name="Parsing.MinuteAliases" xml:space="preserve">
+    <value>m|min|minute|minutes</value>
+    <comment>Accepted minute units, separated by |. Translate abbreviations and singular/plural forms. English aliases remain available.</comment>
+  </data>
+  <data name="Parsing.SecondAliases" xml:space="preserve">
+    <value>s|sec|second|seconds</value>
+    <comment>Accepted second units, separated by |. Translate abbreviations and singular/plural forms. English aliases remain available.</comment>
+  </data>
+  <data name="Parsing.StopwatchPrefixes" xml:space="preserve">
+    <value>start stopwatch|stopwatch</value>
+    <comment>Accepted prefixes for starting a named stopwatch from Home, separated by |. A name follows the prefix.</comment>
+  </data>
+  <data name="Parsing.EndTimePattern" xml:space="preserve">
+    <value>^(?:(?&lt;name&gt;.*?)\s+)?(?:until|at)\s+(?&lt;time&gt;.+)$</value>
+    <comment>End-time query regex. Translate keywords and word order, preserving named captures "name" (optional timer name) and "time" (local clock time). Keep word boundaries for alphabetic keywords. Uses .NET non-backtracking syntax: no lookarounds or backreferences. English syntax remains available.</comment>
+  </data>
+  <data name="Action.ClearFinishedTimers" xml:space="preserve">
+    <value>Clear finished timers…</value>
+  </data>
+  <data name="Action.FinishStopwatch" xml:space="preserve">
+    <value>Finish</value>
+  </data>
+  <data name="Action.RepeatTimerFormat" xml:space="preserve">
+    <value>Repeat {0}</value>
+  </data>
+  <data name="Action.HideOlderResults" xml:space="preserve">
+    <value>Hide older results</value>
+  </data>
+  <data name="Action.ShowOlderResultsFormat" xml:space="preserve">
+    <value>Show older results ({0})</value>
+  </data>
+  <data name="Action.StartDurationFormat" xml:space="preserve">
+    <value>Start {0}</value>
+  </data>
+  <data name="Confirm.ClearFinishedTimersFormat" xml:space="preserve">
+    <value>Remove {0} from timer history? Dock pins for these timers will stop working. Repeat last timer may change.</value>
+  </data>
+  <data name="Section.Active" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="Subtitle.TimerFinishedAtFormat" xml:space="preserve">
+    <value>Finished at {0}</value>
+  </data>
+  <data name="Subtitle.TimerSnoozeFinishedAtFormat" xml:space="preserve">
+    <value>Snooze finished at {0}</value>
+  </data>
+  <data name="Action.DismissRingingTimer" xml:space="preserve">
+    <value>Dismiss ringing timer</value>
+  </data>
+  <data name="Action.StartCustomTimer" xml:space="preserve">
+    <value>Start custom timer…</value>
+  </data>
+  <data name="Action.StartNamedTimerTemplateFormat" xml:space="preserve">
+    <value>Start timer {0}</value>
+  </data>
+  <data name="Toast.NoRingingTimer" xml:space="preserve">
+    <value>No timer is ringing.</value>
+  </data>
+  <data name="Toast.TimerAlarmDismissed" xml:space="preserve">
+    <value>Timer alarm dismissed.</value>
+  </data>
+  <data name="Toast.TimerTemplateUnavailable" xml:space="preserve">
+    <value>This timer template is no longer available.</value>
+  </data>
+  <data name="Action.StopNextTimer" xml:space="preserve">
+    <value>Stop next timer</value>
+  </data>
+  <data name="Toast.NoRunningTimer" xml:space="preserve">
+    <value>No timer is running.</value>
+  </data>
+  <data name="Toast.StoppedTimerFormat" xml:space="preserve">
+    <value>Stopped {0}</value>
+  </data>
+</root>

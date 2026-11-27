@@ -1,11 +1,17 @@
+// ------------------------------------------------------------
+//
+// Copyright (c) Jiří Polášek. All rights reserved.
+//
+// ------------------------------------------------------------
+
 namespace JPSoftworks.TimersExtension.Pages;
 
 internal sealed partial class GroupHeaderListItem : ListItem
 {
     public GroupHeaderListItem(string title)
     {
-        Title = title;
-        Section = title;
-        Command = null!;
+        this.Title = title;
+        this.Section = title;
+        this.Command = null!;
     }
 }

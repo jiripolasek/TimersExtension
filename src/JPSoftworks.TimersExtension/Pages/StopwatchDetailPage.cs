@@ -1,71 +1,110 @@
-﻿using System.ComponentModel;
+// ------------------------------------------------------------
+//
+// Copyright (c) Jiří Polášek. All rights reserved.
+//
+// ------------------------------------------------------------
+
+using System.ComponentModel;
+using System.Threading;
 using Windows.Foundation;
 using JPSoftworks.TimersExtension.Commands;
 using JPSoftworks.TimersExtension.Models;
+using JPSoftworks.TimersExtension.Resources;
 using JPSoftworks.TimersExtension.Services;
-using Microsoft.CommandPalette.Extensions;
 
 namespace JPSoftworks.TimersExtension.Pages;
 
-internal sealed class StopwatchDetailPage : ListPage, INotifyItemsChanged
+internal sealed partial class StopwatchDetailPage : ListPage, INotifyItemsChanged, IDisposable
 {
+    event TypedEventHandler<object, IItemsChangedEventArgs> INotifyItemsChanged.ItemsChanged
+    {
+        add
+        {
+            lock (this._gate)
+            {
+                this._itemsChangedSubscriberCount++;
+                this.ItemsChanged += value;
+                this.EnableUIUpdates(true);
+            }
+
+            this._refreshes.Drain();
+        }
+        remove
+        {
+            lock (this._gate)
+            {
+                this.ItemsChanged -= value;
+                this._itemsChangedSubscriberCount = Math.Max(0, this._itemsChangedSubscriberCount - 1);
+                this.EnableUIUpdates(this._itemsChangedSubscriberCount > 0);
+            }
+        }
+    }
+
+    private const int SoftRefreshItemCount = -2;
+
     private readonly StopwatchInstance _stopwatch;
     private readonly StopwatchScheduler _scheduler;
+    private readonly LapStopwatchCommand _lapCommand;
+    private readonly ElapsedCommand _elapsedCommand;
     private readonly ListItem _elapsedItem;
     private readonly ListItem _lapTimeItem;
-    private int _lastLapCount;
+    private readonly Lock _gate = new();
+    private readonly NotificationQueue _refreshes;
+    private ListItem? _pauseResumeItem;
+    private CommandContextItem? _pauseResumeShortcutItem;
+    private volatile IListItem[] _items = [];
+    private int _itemsChangedSubscriberCount;
+    private IReadOnlyList<LapRecord> _lastLaps = [];
     private StopwatchState _lastState;
-    private bool _uiUpdatesEnabled;
+    private volatile bool _uiUpdatesEnabled;
 
     public StopwatchDetailPage(StopwatchInstance stopwatch, StopwatchScheduler scheduler)
     {
-        _stopwatch = stopwatch;
-        _scheduler = scheduler;
-        _lastLapCount = stopwatch.Laps.Count;
-        _lastState = stopwatch.State;
+        this._stopwatch = stopwatch;
+        this._scheduler = scheduler;
+        this._refreshes = new NotificationQueue(this._gate);
+        this._lapCommand = new LapStopwatchCommand(stopwatch.Id, scheduler);
+        this._elapsedCommand = new ElapsedCommand { Action = this._lapCommand };
 
-        Icon = Icons.Stopwatch;
-        Title = string.IsNullOrWhiteSpace(stopwatch.Name) ? "Stopwatch" : stopwatch.Name;
-        Name = "Details";
+        this.Id = CommandIds.StopwatchDetail(stopwatch.Id);
+        this.Icon = Icons.Stopwatch;
+        this.Title = LabelFormatter.FormatStopwatchName(stopwatch.Name);
+        this.Name = Strings.Page_Details;
 
-        _elapsedItem = new ListItem
+        this._elapsedItem = new ListItem(this._elapsedCommand)
         {
-            Title = "Elapsed",
-            Subtitle = FormatTime(_stopwatch.Elapsed),
+            Title = Strings.Label_Elapsed,
+            Subtitle = LabelFormatter.FormatStopwatchTime(this._stopwatch.Elapsed),
             Icon = Icons.Stopwatch
         };
 
-        _lapTimeItem = new ListItem
+        this._lapTimeItem = new ListItem
         {
-            Title = "Current Lap",
-            Subtitle = FormatTime(_stopwatch.CurrentLapTime ?? TimeSpan.Zero),
+            Title = Strings.Label_CurrentLap,
+            Subtitle = LabelFormatter.FormatStopwatchTime(this._stopwatch.CurrentLapTime ?? TimeSpan.Zero),
             Icon = Icons.Lap
         };
+
+        this.RebuildItems(stopwatch.State, stopwatch.Laps);
     }
 
-    public void SetUIUpdatesEnabled(bool enabled)
+    private void EnableUIUpdates(bool enabled)
     {
-        if (_uiUpdatesEnabled == enabled)
+        if (this._uiUpdatesEnabled == enabled)
         {
             return;
         }
 
-        _uiUpdatesEnabled = enabled;
+        this._uiUpdatesEnabled = enabled;
 
         if (enabled)
         {
-            _stopwatch.PropertyChanged += Stopwatch_PropertyChanged;
-            UpdateTimeDisplays();
-            if (_lastLapCount != _stopwatch.Laps.Count || _lastState != _stopwatch.State)
-            {
-                _lastLapCount = _stopwatch.Laps.Count;
-                _lastState = _stopwatch.State;
-                RaiseItemsChanged();
-            }
+            this._stopwatch.PropertyChanged += this.Stopwatch_PropertyChanged;
+            this._refreshes.Enqueue(() => this.RefreshItems(true));
         }
         else
         {
-            _stopwatch.PropertyChanged -= Stopwatch_PropertyChanged;
+            this._stopwatch.PropertyChanged -= this.Stopwatch_PropertyChanged;
         }
     }
 
@@ -74,121 +113,134 @@ internal sealed class StopwatchDetailPage : ListPage, INotifyItemsChanged
         switch (e.PropertyName)
         {
             case nameof(StopwatchInstance.Elapsed):
-            case nameof(StopwatchInstance.CurrentLapTime):
-                UpdateTimeDisplays();
+                this.UpdateTimeDisplays();
                 break;
 
             case nameof(StopwatchInstance.Laps):
-                if (_stopwatch.Laps.Count != _lastLapCount)
-                {
-                    _lastLapCount = _stopwatch.Laps.Count;
-                    RaiseItemsChanged();
-                }
-                break;
-
             case nameof(StopwatchInstance.State):
-                if (_stopwatch.State != _lastState)
+                lock (this._gate)
                 {
-                    _lastState = _stopwatch.State;
-                    RaiseItemsChanged();
+                    if (!this._uiUpdatesEnabled)
+                    {
+                        return;
+                    }
+
+                    this._refreshes.Enqueue(() => this.RefreshItems(false));
                 }
+
+                this._refreshes.Drain();
                 break;
+        }
+    }
+
+    private void RefreshItems(bool opening)
+    {
+        if (!this._uiUpdatesEnabled)
+        {
+            return;
+        }
+
+        if (opening)
+        {
+            this.UpdateTimeDisplays();
+        }
+
+        // Read the model when the queued refresh runs, including after a newer state change.
+        var state = this._stopwatch.State;
+        var laps = this._stopwatch.Laps;
+        var contentChanged = this._lastLaps != laps || this._lastState != state;
+        if (opening || contentChanged)
+        {
+            this.RebuildItems(state, laps);
+        }
+
+        if (contentChanged)
+        {
+            this.RaiseItemsChanged(opening ? -1 : SoftRefreshItemCount);
         }
     }
 
     private void UpdateTimeDisplays()
     {
-        _elapsedItem.Subtitle = FormatTime(_stopwatch.Elapsed);
-        _lapTimeItem.Subtitle = FormatTime(_stopwatch.CurrentLapTime ?? TimeSpan.Zero);
+        this._elapsedItem.Subtitle = LabelFormatter.FormatStopwatchTime(this._stopwatch.Elapsed);
+        this._lapTimeItem.Subtitle
+            = LabelFormatter.FormatStopwatchTime(this._stopwatch.CurrentLapTime ?? TimeSpan.Zero);
     }
 
-    public override IListItem[] GetItems()
+    public override IListItem[] GetItems() => this._items;
+
+    private void RebuildItems(StopwatchState state, IReadOnlyList<LapRecord> laps)
     {
-        var items = new List<IListItem>
+        var items = new List<IListItem> { this._elapsedItem };
+        if (laps.Count > 0 && state is StopwatchState.Running or StopwatchState.Paused)
         {
-            _elapsedItem,
-            _lapTimeItem
-        };
+            items.Add(this._lapTimeItem);
+        }
 
         // Actions section
-        items.Add(new GroupHeaderListItem("Actions"));
+        items.Add(new GroupHeaderListItem(Strings.Page_Actions));
+        var shortcutCommands = new List<CommandContextItem>();
 
-        switch (_stopwatch.State)
+        switch (state)
         {
             case StopwatchState.Pending:
-                items.Add(new ListItem(new StartStopwatchCommand(_stopwatch.Id, _scheduler))
-                {
-                    Title = "Start",
-                    Icon = Icons.StartStopwatch
-                });
+                var startCommand = new StartStopwatchCommand(this._stopwatch.Id, this._scheduler);
+                this._elapsedCommand.Action = startCommand;
+                items.Add(new ListItem(startCommand) { Icon = startCommand.Icon });
+                shortcutCommands.Add(new CommandContextItem(this.CreateCopyElapsedTimeCommand()));
                 break;
 
             case StopwatchState.Running:
-                items.Add(new ListItem(new LapStopwatchCommand(_stopwatch.Id, _scheduler))
-                {
-                    Title = "Lap",
-                    Icon = Icons.Lap
-                });
-                items.Add(new ListItem(new PauseStopwatchCommand(_stopwatch.Id, _scheduler))
-                {
-                    Title = "Pause",
-                    Icon = Icons.PauseStopwatch
-                });
-                items.Add(new ListItem(new StopStopwatchCommand(_stopwatch.Id, _scheduler))
-                {
-                    Title = "Stop",
-                    Icon = Icons.StopStopwatch
-                });
+                this._elapsedCommand.Action = this._lapCommand;
+                this.AddPauseResumeAction(items, shortcutCommands, false);
+                AddAction(items, shortcutCommands, this._lapCommand, Strings.Action_Lap, Icons.Lap, Chords.Lap);
+                AddAction(items, shortcutCommands, new StopStopwatchCommand(this._stopwatch.Id, this._scheduler),
+                    Strings.Action_FinishStopwatch, Icons.StopStopwatch, Chords.Stop);
                 break;
 
             case StopwatchState.Paused:
-                items.Add(new ListItem(new ResumeStopwatchCommand(_stopwatch.Id, _scheduler))
-                {
-                    Title = "Resume",
-                    Icon = Icons.StartStopwatch
-                });
-                items.Add(new ListItem(new StopStopwatchCommand(_stopwatch.Id, _scheduler))
-                {
-                    Title = "Stop",
-                    Icon = Icons.StopStopwatch
-                });
-                items.Add(new ListItem(new ResetStopwatchCommand(_stopwatch.Id, _scheduler))
-                {
-                    Title = "Reset",
-                    Icon = Icons.ResetStopwatch
-                });
+                shortcutCommands.Add(new CommandContextItem(this.CreateCopyElapsedTimeCommand()));
+                this._elapsedCommand.Action = this.AddPauseResumeAction(items, shortcutCommands, true);
+                AddAction(items, shortcutCommands, new ResetStopwatchCommand(this._stopwatch.Id, this._scheduler),
+                    Strings.Action_Reset, Icons.ResetStopwatch, Chords.Reset);
+                AddAction(items, shortcutCommands, new StopStopwatchCommand(this._stopwatch.Id, this._scheduler),
+                    Strings.Action_FinishStopwatch, Icons.StopStopwatch, Chords.Stop);
                 break;
 
             case StopwatchState.Stopped:
-                items.Add(new ListItem(new ResetStopwatchCommand(_stopwatch.Id, _scheduler))
-                {
-                    Title = "Reset",
-                    Icon = Icons.ResetStopwatch
-                });
+                this._elapsedCommand.Action = this.CreateCopyElapsedTimeCommand();
+                AddAction(items, shortcutCommands, new ResetStopwatchCommand(this._stopwatch.Id, this._scheduler),
+                    Strings.Action_Reset, Icons.ResetStopwatch, Chords.Reset);
                 break;
         }
 
-        items.Add(new ListItem(new DeleteStopwatchCommand(_stopwatch.Id, _scheduler))
-        {
-            Title = "Delete",
-            Icon = Icons.Delete
-        });
+        var deleteCommand = new DeleteStopwatchCommand(this._stopwatch.Id, this._scheduler, StopwatchIndexPage.PageId,
+            NavigationMode.GoBack);
+        var confirmedDeleteCommand = new DeletionConfirmationCommand(
+            deleteCommand,
+            Strings.Confirm_DeleteStopwatch_Title,
+            ResourceFormatter.Format(Strings.Confirm_DeleteStopwatch_Description,
+                LabelFormatter.FormatStopwatchName(this._stopwatch.Name)));
+
+        AddAction(items, shortcutCommands, confirmedDeleteCommand, Strings.Action_Delete, Icons.Delete, Chords.Delete,
+            true);
+        this._elapsedItem.MoreCommands = [.. shortcutCommands];
 
         // Laps section
-        var laps = _stopwatch.Laps;
-        if (laps.Count > 0)
+        var lapCount = laps.Count;
+        if (lapCount > 0)
         {
-            items.Add(new GroupHeaderListItem("Laps"));
+            items.Add(new GroupHeaderListItem(Strings.Label_Laps));
 
             int fastestIndex = -1;
             int slowestIndex = -1;
 
-            if (laps.Count >= 2)
+            if (lapCount >= 2)
             {
                 var fastestTime = TimeSpan.MaxValue;
                 var slowestTime = TimeSpan.MinValue;
 
-                for (var i = 0; i < laps.Count; i++)
+                for (var i = 0; i < lapCount; i++)
                 {
                     var lapTime = laps[i].LapTime;
                     if (lapTime < fastestTime)
@@ -196,6 +248,7 @@ internal sealed class StopwatchDetailPage : ListPage, INotifyItemsChanged
                         fastestTime = lapTime;
                         fastestIndex = i;
                     }
+
                     if (lapTime > slowestTime)
                     {
                         slowestTime = lapTime;
@@ -210,39 +263,120 @@ internal sealed class StopwatchDetailPage : ListPage, INotifyItemsChanged
                 }
             }
 
-            for (var i = laps.Count - 1; i >= 0; i--)
+            for (var i = lapCount - 1; i >= 0; i--)
             {
                 var lap = laps[i];
                 var tags = new List<Tag>();
 
                 if (i == fastestIndex)
                 {
-                    tags.Add(new Tag("Fastest"));
+                    tags.Add(new Tag(Strings.Stopwatch_Fastest));
                 }
+
                 if (i == slowestIndex)
                 {
-                    tags.Add(new Tag("Slowest"));
+                    tags.Add(new Tag(Strings.Stopwatch_Slowest));
                 }
 
                 items.Add(new ListItem
                 {
-                    Title = $"Lap {lap.Number}",
-                    Subtitle = $"{FormatTime(lap.LapTime)} (Total: {FormatTime(lap.TotalTime)})",
+                    Title = ResourceFormatter.Format(Strings.Stopwatch_LapTitleFormat, lap.Number),
+                    Subtitle = ResourceFormatter.Format(Strings.Stopwatch_LapSubtitleFormat,
+                        LabelFormatter.FormatStopwatchTime(lap.LapTime),
+                        LabelFormatter.FormatStopwatchTime(lap.TotalTime)),
                     Icon = Icons.Lap,
                     Tags = [.. tags]
                 });
             }
         }
 
-        return [.. items];
+        this._items = [.. items];
+        this._lastState = state;
+        this._lastLaps = laps;
     }
 
-    private static string FormatTime(TimeSpan time)
+    private CopyTextCommand CreateCopyElapsedTimeCommand() =>
+        new(LabelFormatter.FormatStopwatchTime(this._stopwatch.Elapsed)) { Name = Strings.Action_CopyElapsedTime };
+
+    private InvokableCommand AddPauseResumeAction(
+        List<IListItem> items,
+        List<CommandContextItem> shortcutCommands,
+        bool resume)
     {
-        if (time.TotalHours >= 1)
+        InvokableCommand command = resume
+            ? new ResumeStopwatchCommand(this._stopwatch.Id, this._scheduler)
+            : new PauseStopwatchCommand(this._stopwatch.Id, this._scheduler);
+        var title = resume ? Strings.Action_Resume : Strings.Action_Pause;
+        var icon = resume ? Icons.StartStopwatch : Icons.PauseStopwatch;
+        var shortcut = resume ? Chords.Resume : Chords.Pause;
+
+        if (this._pauseResumeItem is null)
         {
-            return $"{(int)time.TotalHours}:{time.Minutes:D2}:{time.Seconds:D2}.{time.Milliseconds / 10:D2}";
+            this._pauseResumeItem = new ListItem(command);
         }
-        return $"{time.Minutes:D2}:{time.Seconds:D2}.{time.Milliseconds / 10:D2}";
+        else
+        {
+            this._pauseResumeItem.Command = command;
+        }
+
+        this._pauseResumeItem.Title = title;
+        this._pauseResumeItem.Icon = icon;
+        items.Add(this._pauseResumeItem);
+
+        if (this._pauseResumeShortcutItem is null)
+        {
+            this._pauseResumeShortcutItem = new CommandContextItem(command);
+        }
+        else
+        {
+            this._pauseResumeShortcutItem.Command = command;
+        }
+
+        this._pauseResumeShortcutItem.Title = title;
+        this._pauseResumeShortcutItem.Icon = icon;
+        this._pauseResumeShortcutItem.RequestedShortcut = shortcut;
+        shortcutCommands.Add(this._pauseResumeShortcutItem);
+        return command;
+    }
+
+    private static void AddAction(
+        List<IListItem> items,
+        List<CommandContextItem> shortcutCommands,
+        InvokableCommand command,
+        string title,
+        IconInfo icon,
+        KeyChord shortcut,
+        bool isCritical = false)
+    {
+        items.Add(new ListItem(command) { Title = title, Icon = icon });
+        shortcutCommands.Add(new CommandContextItem(command)
+        {
+            Title = title, Icon = icon, IsCritical = isCritical, RequestedShortcut = shortcut
+        });
+    }
+
+    public void Dispose()
+    {
+        lock (this._gate)
+        {
+            this.EnableUIUpdates(false);
+        }
+    }
+
+    // Retail CmdPal displays the row title in More when a list item's command is replaced.
+    private sealed partial class ElapsedCommand : InvokableCommand
+    {
+        public required InvokableCommand Action
+        {
+            get;
+            set
+            {
+                field = value;
+                this.Icon = value.Icon;
+                this.Name = value.Name;
+            }
+        }
+
+        public override ICommandResult Invoke() => this.Action.Invoke();
     }
 }

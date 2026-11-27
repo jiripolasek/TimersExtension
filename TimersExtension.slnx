@@ -1,0 +1,29 @@
+<Solution>
+  <Configurations>
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Folder Name="/Apps/">
+    <Project Path="src/JPSoftworks.TimersExtension/JPSoftworks.TimersExtension.csproj" Id="3ef1b4f9-8bf9-a0c2-0dd1-9fc581a16df3">
+      <Platform Solution="*|ARM64" Project="ARM64" />
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+  </Folder>
+  <Folder Name="/Publishing/">
+    <Project Path="src/JPSoftworks.TimersExtension.Package/JPSoftworks.TimersExtension.Package.wapproj" Type="c7167f0d-bc9f-4e6e-afe1-012c56b48db5">
+      <Deploy />
+    </Project>
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="eng/CmdPal.Extension.props" />
+    <File Path="readme.md" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="tests/JPSoftworks.TimersExtension.Tests/JPSoftworks.TimersExtension.Tests.csproj" Id="d17325a6-5d55-4de6-aeef-3cc11626516b">
+      <Platform Solution="*|ARM64" Project="ARM64" />
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+  </Folder>
+</Solution>

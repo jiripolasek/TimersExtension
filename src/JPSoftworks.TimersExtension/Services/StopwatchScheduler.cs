@@ -1,84 +1,131 @@
-﻿using System.Threading;
+// ------------------------------------------------------------
+//
+// Copyright (c) Jiří Polášek. All rights reserved.
+//
+// ------------------------------------------------------------
+
+using System.Linq;
+using System.Threading;
 using JPSoftworks.TimersExtension.Models;
 
 namespace JPSoftworks.TimersExtension.Services;
 
-public sealed class StopwatchScheduler : IDisposable
+public sealed partial class StopwatchScheduler : IDisposable
 {
-    private readonly StopwatchStorage _storage;
-    private readonly Lock _gate = new();
-    private readonly Dictionary<Guid, StopwatchInstance> _stopwatches = [];
-    private readonly Timer _uiUpdateTimer;
-    private bool _initialized;
-
     public event EventHandler? StopwatchesChanged;
     public event EventHandler<LapRecordedEventArgs>? LapRecorded;
+    internal event EventHandler? StopwatchesRemoved;
+    private static readonly TimeSpan UIUpdateInterval = TimeSpan.FromMilliseconds(50);
+
+    private readonly StopwatchStorage _storage;
+    private readonly Lock _initializationGate = new();
+    private readonly Lock _gate = new();
+    private readonly NotificationQueue _notifications;
+    private readonly Dictionary<Guid, StopwatchInstance> _stopwatches = [];
+    private readonly SchedulerRefreshTimer _uiUpdateTimer;
+    private volatile bool _initialized;
+    private bool _disposed;
 
     public StopwatchScheduler(StopwatchStorage storage)
+        : this(storage, TimeProvider.System)
     {
-        _storage = storage;
-
-        // Update at 1s interval to avoid overwhelming COM RPC in CmdPal extension
-        // Internal precision remains high (DateTimeOffset), only UI notifications are throttled
-        _uiUpdateTimer = new Timer(UIUpdateCallback, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
     }
 
-    private void UIUpdateCallback(object? state)
+    internal StopwatchScheduler(StopwatchStorage storage, TimeProvider timeProvider)
     {
-        lock (_gate)
+        this._storage = storage;
+        this._notifications = new NotificationQueue(this._gate);
+
+        // Keep the centisecond display fluid without attempting a wasteful 100 Hz COM update rate.
+        // Internal precision remains based on DateTimeOffset.
+        this._uiUpdateTimer = new SchedulerRefreshTimer(timeProvider, UIUpdateInterval, this.RefreshRunningStopwatches);
+    }
+
+    private void RefreshRunningStopwatches()
+    {
+        StopwatchInstance[] running;
+        lock (this._gate)
         {
-            foreach (var stopwatch in _stopwatches.Values)
+            if (this._disposed)
             {
-                if (stopwatch.State == StopwatchState.Running)
-                {
-                    stopwatch.NotifyTimeChanged();
-                }
+                return;
             }
+
+            running = this._stopwatches.Values.Where(static stopwatch => stopwatch.State == StopwatchState.Running)
+                .ToArray();
+        }
+
+        foreach (var stopwatch in running)
+        {
+            stopwatch.NotifyTimeChanged();
         }
     }
+
+    private void UpdateRefreshTimer() =>
+        this._uiUpdateTimer.SetEnabled(this._stopwatches.Values.Any(static stopwatch =>
+            stopwatch.State == StopwatchState.Running));
 
     public void Initialize()
     {
-        if (_initialized)
+        lock (this._initializationGate)
         {
-            return;
-        }
-
-        var loaded = _storage.Load();
-
-        lock (_gate)
-        {
-            foreach (var stopwatch in loaded)
+            ObjectDisposedException.ThrowIf(this._disposed, this);
+            if (this._initialized)
             {
-                _stopwatches[stopwatch.Id] = stopwatch;
+                return;
             }
-            _initialized = true;
+
+            var loaded = this._storage.Load();
+            var isReadOnly = this._storage.IsReadOnly;
+            var restoredAt = DateTimeOffset.UtcNow;
+            lock (this._gate)
+            {
+                var restoredStateChanged = false;
+                foreach (var stopwatch in loaded)
+                {
+                    restoredStateChanged |= stopwatch.NormalizeAfterRestore();
+                    if (isReadOnly && stopwatch.State == StopwatchState.Running)
+                    {
+                        stopwatch.TransitionToPaused(restoredAt, stopwatch.Elapsed, false);
+                    }
+
+                    this._stopwatches[stopwatch.Id] = stopwatch;
+                }
+
+                if (restoredStateChanged)
+                {
+                    this.Persist();
+                }
+
+                this.UpdateRefreshTimer();
+                this._initialized = true;
+            }
         }
 
-        StopwatchesChanged?.Invoke(this, EventArgs.Empty);
+        NotificationQueue.Raise(this.StopwatchesChanged, this);
     }
 
     public IReadOnlyList<StopwatchInstance> GetStopwatchesSnapshot()
     {
-        lock (_gate)
+        lock (this._gate)
         {
-            List<StopwatchInstance> list = [.. _stopwatches.Values];
-            list.Sort((a, b) => a.CreatedAt.CompareTo(b.CreatedAt));
+            List<StopwatchInstance> list = [.. this._stopwatches.Values];
+            list.Sort((a, b) => b.CreatedAt.CompareTo(a.CreatedAt));
             return list;
         }
     }
 
     public StopwatchInstance? TryGetStopwatch(Guid stopwatchId)
     {
-        lock (_gate)
+        lock (this._gate)
         {
-            return _stopwatches.GetValueOrDefault(stopwatchId);
+            return this._stopwatches.GetValueOrDefault(stopwatchId);
         }
     }
 
     public StopwatchInstance Create(string? name = null)
     {
-        EnsureInitialized();
+        this.EnsureInitialized();
 
         var instance = new StopwatchInstance
         {
@@ -88,47 +135,43 @@ public sealed class StopwatchScheduler : IDisposable
             State = StopwatchState.Pending
         };
 
-        lock (_gate)
+        lock (this._gate)
         {
-            _stopwatches[instance.Id] = instance;
+            this._stopwatches[instance.Id] = instance;
+            this.Persist();
         }
 
-        Persist();
-        StopwatchesChanged?.Invoke(this, EventArgs.Empty);
+        NotificationQueue.Raise(this.StopwatchesChanged, this);
         return instance;
     }
 
     public StopwatchInstance CreateAndStart(string? name = null)
     {
-        EnsureInitialized();
+        this.EnsureInitialized();
 
         var now = DateTimeOffset.UtcNow;
-        var instance = new StopwatchInstance
-        {
-            Id = Guid.NewGuid(),
-            Name = name ?? string.Empty,
-            CreatedAt = now
-        };
+        var instance = new StopwatchInstance { Id = Guid.NewGuid(), Name = name ?? string.Empty, CreatedAt = now };
         instance.TransitionToRunning(now);
 
-        lock (_gate)
+        lock (this._gate)
         {
-            _stopwatches[instance.Id] = instance;
+            this._stopwatches[instance.Id] = instance;
+            this._uiUpdateTimer.SetEnabled(true);
+            this.Persist();
         }
 
-        Persist();
-        StopwatchesChanged?.Invoke(this, EventArgs.Empty);
+        NotificationQueue.Raise(this.StopwatchesChanged, this);
         return instance;
     }
 
     public void Start(Guid stopwatchId)
     {
-        EnsureInitialized();
+        this.EnsureInitialized();
         var now = DateTimeOffset.UtcNow;
 
-        lock (_gate)
+        lock (this._gate)
         {
-            if (!_stopwatches.TryGetValue(stopwatchId, out var stopwatch))
+            if (!this._stopwatches.TryGetValue(stopwatchId, out var stopwatch))
             {
                 return;
             }
@@ -138,21 +181,24 @@ public sealed class StopwatchScheduler : IDisposable
                 return;
             }
 
-            stopwatch.TransitionToRunning(now);
+            stopwatch.TransitionToRunning(now, false);
+            this._uiUpdateTimer.SetEnabled(true);
+            this.Persist();
+            this._notifications.Enqueue(stopwatch.NotifyStateChanged);
         }
 
-        Persist();
-        StopwatchesChanged?.Invoke(this, EventArgs.Empty);
+        this._notifications.Drain();
+        NotificationQueue.Raise(this.StopwatchesChanged, this);
     }
 
     public void Pause(Guid stopwatchId)
     {
-        EnsureInitialized();
+        this.EnsureInitialized();
         var now = DateTimeOffset.UtcNow;
 
-        lock (_gate)
+        lock (this._gate)
         {
-            if (!_stopwatches.TryGetValue(stopwatchId, out var stopwatch))
+            if (!this._stopwatches.TryGetValue(stopwatchId, out var stopwatch))
             {
                 return;
             }
@@ -163,27 +209,30 @@ public sealed class StopwatchScheduler : IDisposable
             }
 
             var elapsed = stopwatch.Elapsed;
-            stopwatch.TransitionToPaused(now, elapsed);
+            stopwatch.TransitionToPaused(now, elapsed, false);
+            this.UpdateRefreshTimer();
+            this.Persist();
+            this._notifications.Enqueue(stopwatch.NotifyStateChanged);
         }
 
-        Persist();
-        StopwatchesChanged?.Invoke(this, EventArgs.Empty);
+        this._notifications.Drain();
+        NotificationQueue.Raise(this.StopwatchesChanged, this);
     }
 
     public void Resume(Guid stopwatchId)
     {
-        EnsureInitialized();
-        Start(stopwatchId); // Same logic as Start
+        this.EnsureInitialized();
+        this.Start(stopwatchId); // Same logic as Start
     }
 
     public void Stop(Guid stopwatchId)
     {
-        EnsureInitialized();
+        this.EnsureInitialized();
         var now = DateTimeOffset.UtcNow;
 
-        lock (_gate)
+        lock (this._gate)
         {
-            if (!_stopwatches.TryGetValue(stopwatchId, out var stopwatch))
+            if (!this._stopwatches.TryGetValue(stopwatchId, out var stopwatch))
             {
                 return;
             }
@@ -194,41 +243,83 @@ public sealed class StopwatchScheduler : IDisposable
             }
 
             var elapsed = stopwatch.Elapsed;
-            stopwatch.TransitionToStopped(now, elapsed);
+            stopwatch.TransitionToStopped(now, elapsed, false);
+            this.UpdateRefreshTimer();
+            this.Persist();
+            this._notifications.Enqueue(stopwatch.NotifyStateChanged);
         }
 
-        Persist();
-        StopwatchesChanged?.Invoke(this, EventArgs.Empty);
+        this._notifications.Drain();
+        NotificationQueue.Raise(this.StopwatchesChanged, this);
+    }
+
+    public void StopAll()
+    {
+        this.EnsureInitialized();
+        var changed = false;
+        var now = DateTimeOffset.UtcNow;
+
+        lock (this._gate)
+        {
+            foreach (var stopwatch in this._stopwatches.Values)
+            {
+                if (stopwatch.State is not (StopwatchState.Running or StopwatchState.Paused))
+                {
+                    continue;
+                }
+
+                var elapsed = stopwatch.Elapsed;
+                stopwatch.TransitionToStopped(now, elapsed, false);
+                this._notifications.Enqueue(stopwatch.NotifyStateChanged);
+                changed = true;
+            }
+
+            if (changed)
+            {
+                this._uiUpdateTimer.SetEnabled(false);
+                this.Persist();
+            }
+        }
+
+        if (changed)
+        {
+            this._notifications.Drain();
+            NotificationQueue.Raise(this.StopwatchesChanged, this);
+        }
     }
 
     public void Reset(Guid stopwatchId)
     {
-        EnsureInitialized();
+        this.EnsureInitialized();
 
-        lock (_gate)
+        lock (this._gate)
         {
-            if (!_stopwatches.TryGetValue(stopwatchId, out var stopwatch))
+            if (!this._stopwatches.TryGetValue(stopwatchId, out var stopwatch))
             {
                 return;
             }
 
-            stopwatch.TransitionToReset();
+            stopwatch.TransitionToReset(false);
+            this.UpdateRefreshTimer();
+            this.Persist();
+            this._notifications.Enqueue(stopwatch.NotifyStateChanged);
+            this._notifications.Enqueue(stopwatch.NotifyLapsChanged);
         }
 
-        Persist();
-        StopwatchesChanged?.Invoke(this, EventArgs.Empty);
+        this._notifications.Drain();
+        NotificationQueue.Raise(this.StopwatchesChanged, this);
     }
 
     public LapRecord? RecordLap(Guid stopwatchId)
     {
-        EnsureInitialized();
+        this.EnsureInitialized();
         var now = DateTimeOffset.UtcNow;
         LapRecord? lap = null;
         StopwatchInstance? stopwatch = null;
 
-        lock (_gate)
+        lock (this._gate)
         {
-            if (!_stopwatches.TryGetValue(stopwatchId, out stopwatch))
+            if (!this._stopwatches.TryGetValue(stopwatchId, out stopwatch))
             {
                 return null;
             }
@@ -238,15 +329,17 @@ public sealed class StopwatchScheduler : IDisposable
                 return null;
             }
 
-            lap = stopwatch.RecordLap(now);
+            lap = stopwatch.RecordLap(now, false);
+            this.Persist();
+            this._notifications.Enqueue(stopwatch.NotifyLapsChanged);
         }
 
-        Persist();
-        StopwatchesChanged?.Invoke(this, EventArgs.Empty);
+        this._notifications.Drain();
+        NotificationQueue.Raise(this.StopwatchesChanged, this);
 
         if (lap is not null && stopwatch is not null)
         {
-            LapRecorded?.Invoke(this, new LapRecordedEventArgs(stopwatch, lap));
+            this.LapRecorded?.Invoke(this, new LapRecordedEventArgs(stopwatch, lap));
         }
 
         return lap;
@@ -254,42 +347,84 @@ public sealed class StopwatchScheduler : IDisposable
 
     public void Remove(Guid stopwatchId)
     {
-        EnsureInitialized();
+        this.EnsureInitialized();
 
-        lock (_gate)
+        lock (this._gate)
         {
-            if (!_stopwatches.Remove(stopwatchId))
+            if (!this._stopwatches.Remove(stopwatchId))
             {
                 return;
             }
+
+            this.UpdateRefreshTimer();
+            this.Persist();
         }
 
-        Persist();
-        StopwatchesChanged?.Invoke(this, EventArgs.Empty);
+        NotificationQueue.Raise(this.StopwatchesChanged, this);
+        NotificationQueue.Raise(this.StopwatchesRemoved, this);
+    }
+
+    public void ClearAll()
+    {
+        this.EnsureInitialized();
+
+        lock (this._gate)
+        {
+            if (this._stopwatches.Count == 0)
+            {
+                return;
+            }
+
+            this._stopwatches.Clear();
+            this._uiUpdateTimer.SetEnabled(false);
+            this.Persist();
+        }
+
+        NotificationQueue.Raise(this.StopwatchesChanged, this);
+        NotificationQueue.Raise(this.StopwatchesRemoved, this);
     }
 
     private void Persist()
     {
         List<StopwatchInstance> stopwatches;
-        lock (_gate)
+        lock (this._gate)
         {
-            stopwatches = [.. _stopwatches.Values];
+            // Materialize immutable-in-practice snapshots while holding the scheduler
+            // lock. JsonStorageService writes asynchronously, so passing the live
+            // instances could otherwise persist fields from different state transitions.
+            stopwatches = new List<StopwatchInstance>(this._stopwatches.Count);
+            foreach (var stopwatch in this._stopwatches.Values)
+            {
+                stopwatches.Add(stopwatch.CreatePersistenceSnapshot());
+            }
         }
 
-        _storage.Save(stopwatches);
+        this._storage.Save(stopwatches);
     }
 
     private void EnsureInitialized()
     {
-        if (!_initialized)
+        if (!this._initialized)
         {
-            Initialize();
+            this.Initialize();
         }
     }
 
     public void Dispose()
     {
-        _uiUpdateTimer.Dispose();
+        lock (this._initializationGate)
+        {
+            if (this._disposed)
+            {
+                return;
+            }
+
+            lock (this._gate)
+            {
+                this._disposed = true;
+                this._uiUpdateTimer.Dispose();
+            }
+        }
     }
 }
 
@@ -300,7 +435,7 @@ public sealed class LapRecordedEventArgs : EventArgs
 
     public LapRecordedEventArgs(StopwatchInstance stopwatch, LapRecord lap)
     {
-        Stopwatch = stopwatch;
-        Lap = lap;
+        this.Stopwatch = stopwatch;
+        this.Lap = lap;
     }
 }

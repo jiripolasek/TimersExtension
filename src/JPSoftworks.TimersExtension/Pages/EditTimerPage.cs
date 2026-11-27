@@ -1,44 +1,45 @@
-using System.Linq;
-using JPSoftworks.TimersExtension.Models;
+// ------------------------------------------------------------
+//
+// Copyright (c) Jiří Polášek. All rights reserved.
+//
+// ------------------------------------------------------------
+
+using JPSoftworks.TimersExtension.Resources;
 using JPSoftworks.TimersExtension.Services;
 
 namespace JPSoftworks.TimersExtension.Pages;
 
 internal sealed partial class EditTimerPage : ContentPage
 {
-    private readonly EditTimerForm _form;
-    private readonly IContent[] _contents;
+    internal const string PageId = CommandIds.TimerCreatePage;
+
     private readonly TimerScheduler _scheduler;
 
-    public override IContent[] GetContent() => _contents;
-
-    public EditTimerPage(TimerScheduler scheduler, TimersIndexPage timersIndexPage)
+    public EditTimerPage(TimerScheduler scheduler)
     {
-        _scheduler = scheduler;
-        Title = "New Timer";
-        _form = new EditTimerForm(null, "Start Timer");
-        _form.TimerSubmitted += Form_TimerSubmitted;
-        _contents = [_form];
+        this._scheduler = scheduler;
+        this.Id = PageId;
+        this.Icon = Icons.NewTimer;
+        this.Title = Strings.Action_NewTimer;
+        this.Name = Strings.Page_Create;
     }
 
-    private void Form_TimerSubmitted(object? sender, TimerDefinition e)
+    public override IContent[] GetContent()
     {
-        var definition = e;
-        if (string.IsNullOrWhiteSpace(definition.Name))
-        {
-            var usedNames = _scheduler.GetTimersSnapshot().Select(t => t.Name)
-                .Concat(_scheduler.GetTemplatesSnapshot().Select(t => t.Name))
-                .ToHashSet();
+        var form = new EditTimerForm(null, Strings.Action_StartTimer);
+        form.TimerSubmitted += this.Form_TimerSubmitted;
+        return [form];
+    }
 
-            var random = new Random();
-            string newName;
-            do
-            {
-                newName = $"Timer {random.Next(1, 10000)}";
-            } while (usedNames.Contains(newName));
-
-            definition = definition with { Name = newName };
-        }
-        _scheduler.StartTimer(definition);
+    private void Form_TimerSubmitted(object? sender, TimerSubmittedEventArgs e)
+    {
+        var timer = this._scheduler.StartTimer(e.Definition);
+        var name = LabelFormatter.FormatTimerName(timer.Name, timer.Duration);
+        var message = timer.ExpectedEnd is { } endTime
+            ? ResourceFormatter.Format(Strings.Toast_StartedTimerWithEndTimeFormat, name,
+                LabelFormatter.FormatEndTime(endTime, timer.StartedAt ?? DateTimeOffset.UtcNow,
+                    TimeZoneInfo.Local, timer.Duration < TimeSpan.FromMinutes(1)))
+            : ResourceFormatter.Format(Strings.Toast_StartedTimerFormat, name);
+        e.Result = CommandResult.ShowToast(new ToastArgs { Message = message, Result = CommandResult.GoBack() });
     }
 }

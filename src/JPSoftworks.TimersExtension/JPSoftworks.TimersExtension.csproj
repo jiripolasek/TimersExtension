@@ -2,71 +2,62 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <RootNamespace>JPSoftworks.TimersExtension</RootNamespace>
+    <AssemblyName>$(CmdPalExtensionAssemblyName)</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PackageManifestPath>$(CmdPalPackageManifest)</PackageManifestPath>
 
-    <WindowsSdkPackageVersion>10.0.26100.68-preview</WindowsSdkPackageVersion>
-    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
-    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
-    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
-    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <TargetFramework>$(CmdPalTargetFramework)</TargetFramework>
+    <TargetPlatformMinVersion>$(CmdPalTargetPlatformMinVersion)</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion>$(CmdPalTargetPlatformMinVersion)</SupportedOSPlatformVersion>
+    <RuntimeIdentifiers>$(CmdPalRuntimeIdentifiers)</RuntimeIdentifiers>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'x64'">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
 
-    <PublishProfile>win-$(Platform).pubxml</PublishProfile>
-    <EnableMsixTooling>true</EnableMsixTooling>
+    <PublishProfile Condition="'$(_IsPublishing)' == 'true'">win-$(Platform).pubxml</PublishProfile>
     <Nullable>enable</Nullable>
+    <NeutralLanguage>$(CmdPalDefaultLanguage)</NeutralLanguage>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
-  <ItemGroup>
-	  <None Remove="Assets\Icons\*.png" />
-	  <None Remove="Assets\Sounds\*.wav" />
-  </ItemGroup>
 
+  <!-- Runtime assets resolved relative to the executable (AppContext.BaseDirectory). -->
   <ItemGroup>
-	<Content Include="Assets\Icons\*.png" />
-	<Content Include="Assets\Sounds\*.wav" />
-    <Content Include="Assets\SplashScreen.scale-200.png" />
-    <Content Include="Assets\LockScreenLogo.scale-200.png" />
-    <Content Include="Assets\Square150x150Logo.scale-200.png" />
-    <Content Include="Assets\Square44x44Logo.scale-200.png" />
-    <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
-    <Content Include="Assets\StoreLogo.png" />
-    <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <None Update="Assets\StoreLogo.png;Assets\Icons\*.png;Assets\Sounds\*.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />
+    <InternalsVisibleTo Include="JPSoftworks.TimersExtension.Tests" />
   </ItemGroup>
 
-  <!--
-    Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
-    Tools extension to be activated for this project even if the Windows App SDK Nuget
-    package has not yet been restored.
-  -->
-  <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
-    <ProjectCapability Include="Msix" />
-  </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Update="Resources\Strings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <Compile Update="Resources\Strings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Strings.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JPSoftworks.CommandPalette.Extensions.Toolkit" />
     <PackageReference Include="Microsoft.CommandPalette.Extensions" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" />
     <PackageReference Include="Shmuelie.WinRTServer" />
-
-    <!-- Needed to enable building an MSIX package -->
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools.MSIX">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
   </ItemGroup>
 
-  <!--
-    Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
-    Explorer "Package and Publish" context menu entry to be enabled for this project even if
-    the Windows App SDK Nuget package has not yet been restored.
-  -->
-  <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
-    <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
-  </PropertyGroup>
-
   <PropertyGroup>
-    <PublishSingleFile>true</PublishSingleFile>
+    <!-- Native AOT and trimming are deployment-time opt-ins (see Build.ps1 -Aot). -->
+    <PublishAot Condition="'$(PublishAot)' == ''">false</PublishAot>
+    <PublishTrimmed Condition="'$(PublishTrimmed)' == ''">false</PublishTrimmed>
+    <SelfContained>true</SelfContained>
+    <!-- The WAP package does not support single-file output. -->
+    <PublishSingleFile>false</PublishSingleFile>
     <IsAotCompatible>true</IsAotCompatible>
 
     <CsWinRTAotOptimizerEnabled>true</CsWinRTAotOptimizerEnabled>
@@ -76,29 +67,29 @@
 
     <!-- When publishing trimmed, make sure to treat trimming warnings as build errors -->
     <ILLinkTreatWarningsAsErrors>true</ILLinkTreatWarningsAsErrors>
-    <DefaultLanguage>en-us</DefaultLanguage>
-
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <!-- In Debug builds, trimming is disabled by default, but all the trim &
-         AOT warnings are enabled. This gives debug builds a tighter inner loop,
-         while at least warning about future trim violations -->
-    <PublishTrimmed>false</PublishTrimmed>
-
+    <!-- Keep trim and AOT analysis enabled for development builds. -->
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
     <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
     <EnableAotAnalyzer>true</EnableAotAnalyzer>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'!='Debug'">
-    <!-- In Release builds, trimming is enabled by default.
-         feel free to disable this if needed -->
-    <PublishTrimmed>true</PublishTrimmed>
-
     <!-- In release, also ignore the aforementioned ILLink warning -->
     <ILLinkTreatWarningsAsErrors>false</ILLinkTreatWarningsAsErrors>
   </PropertyGroup>
 
+  <Target Name="UpdateVersionFromPackageManifest" BeforeTargets="BeforeBuild">
+    <XmlPeek XmlInputPath="$(PackageManifestPath)" Query="/appx:Package/appx:Identity/@Version" Namespaces="&lt;Namespace Prefix='appx' Uri='http://schemas.microsoft.com/appx/manifest/foundation/windows10'/&gt;">
+      <Output TaskParameter="Result" PropertyName="appxManifestVersion" />
+    </XmlPeek>
 
+    <Message Importance="High" Text="Set project version to match Appx manifest: $(appxManifestVersion)" />
+
+    <PropertyGroup>
+      <Version>$(appxManifestVersion)</Version>
+    </PropertyGroup>
+  </Target>
 </Project>

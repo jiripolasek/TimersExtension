@@ -1,4 +1,10 @@
-﻿using System.Text.Json.Serialization;
+﻿// ------------------------------------------------------------
+//
+// Copyright (c) Jiří Polášek. All rights reserved.
+//
+// ------------------------------------------------------------
+
+using System.Text.Json.Serialization;
 using JPSoftworks.TimersExtension.Models;
 
 namespace JPSoftworks.TimersExtension.Serialization;

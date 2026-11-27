@@ -1,10 +1,14 @@
 <Project>
-  <PropertyGroup>
-    <Platforms>x64;ARM64</Platforms>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AnalysisMode>Recommended</AnalysisMode>
-    <_SkipUpgradeNetAnalyzersNuGetWarning>true</_SkipUpgradeNetAnalyzersNuGetWarning>
-    <NuGetAuditMode>direct</NuGetAuditMode>
-    <PlatformTarget>$(Platform)</PlatformTarget>
-  </PropertyGroup>
+	<PropertyGroup>
+		<Platforms>x64;ARM64</Platforms>
+		<WindowsSdkPackageVersion>10.0.26100.87</WindowsSdkPackageVersion>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<AnalysisMode>Recommended</AnalysisMode>
+		<_SkipUpgradeNetAnalyzersNuGetWarning>true</_SkipUpgradeNetAnalyzersNuGetWarning>
+		<NuGetAuditMode>direct</NuGetAuditMode>
+		<PlatformTarget>$(Platform)</PlatformTarget>
+	</PropertyGroup>
+
+	<Import Project="$(MSBuildThisFileDirectory)eng\CmdPal.Extension.props"
+	        Condition="'$(CmdPalExtensionProject)' == '' and Exists('$(MSBuildThisFileDirectory)eng\CmdPal.Extension.props')" />
 </Project>

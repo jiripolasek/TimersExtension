@@ -1,0 +1,27 @@
+<Project>
+	<PropertyGroup>
+		<CmdPalPackagingTemplateVersion>8</CmdPalPackagingTemplateVersion>
+		<CmdPalRepositoryRoot>$(MSBuildThisFileDirectory)..</CmdPalRepositoryRoot>
+		<CmdPalRepositoryRoot>$([MSBuild]::NormalizeDirectory('$(CmdPalRepositoryRoot)'))</CmdPalRepositoryRoot>
+
+		<CmdPalExtensionProject>$(CmdPalRepositoryRoot)src/JPSoftworks.TimersExtension/JPSoftworks.TimersExtension.csproj</CmdPalExtensionProject>
+		<CmdPalExtensionProjectReference>../JPSoftworks.TimersExtension/JPSoftworks.TimersExtension.csproj</CmdPalExtensionProjectReference>
+		<CmdPalExtensionAssemblyName>JPSoftworks.TimersExtension</CmdPalExtensionAssemblyName>
+
+		<CmdPalPackageProject>$(CmdPalRepositoryRoot)src/JPSoftworks.TimersExtension.Package/JPSoftworks.TimersExtension.Package.wapproj</CmdPalPackageProject>
+		<CmdPalPackageManifest>$(CmdPalRepositoryRoot)src/JPSoftworks.TimersExtension.Package/Package.appxmanifest</CmdPalPackageManifest>
+		<CmdPalPackageExecutable>JPSoftworks.TimersExtension/JPSoftworks.TimersExtension.exe</CmdPalPackageExecutable>
+		<CmdPalPackageProjectGuid>91ce2e64-3920-476b-9274-23f450d93ee4</CmdPalPackageProjectGuid>
+
+		<CmdPalTargetFramework>net11.0-windows10.0.26100.0</CmdPalTargetFramework>
+		<CmdPalTargetPlatformVersion>10.0.26100.0</CmdPalTargetPlatformVersion>
+		<CmdPalTargetPlatformMinVersion>10.0.19041.0</CmdPalTargetPlatformMinVersion>
+		<CmdPalRuntimeIdentifiers>win-x64;win-arm64</CmdPalRuntimeIdentifiers>
+		<CmdPalDefaultLanguage>en-US</CmdPalDefaultLanguage>
+
+		<CmdPalArtifactsPath>$(CmdPalRepositoryRoot)artifacts</CmdPalArtifactsPath>
+		<CmdPalArtifactsPath>$([MSBuild]::NormalizeDirectory('$(CmdPalArtifactsPath)'))</CmdPalArtifactsPath>
+		<CmdPalSupportsNativeAot>true</CmdPalSupportsNativeAot>
+		<CmdPalWindowsSdkBuildToolsVersion>10.0.26100.4188</CmdPalWindowsSdkBuildToolsVersion>
+	</PropertyGroup>
+</Project>

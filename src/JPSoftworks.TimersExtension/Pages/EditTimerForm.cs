@@ -1,157 +1,230 @@
+// ------------------------------------------------------------
+//
+// Copyright (c) Jiří Polášek. All rights reserved.
+//
+// ------------------------------------------------------------
+
+using System.Globalization;
 using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using JPSoftworks.TimersExtension.Models;
+using JPSoftworks.TimersExtension.Resources;
+using JPSoftworks.TimersExtension.Services;
 
 namespace JPSoftworks.TimersExtension.Pages;
 
 internal sealed partial class EditTimerForm : FormContent
 {
-    public event EventHandler<TimerDefinition>? TimerSubmitted;
+    public event EventHandler<TimerSubmittedEventArgs>? TimerSubmitted;
+    private const string DefaultSoundValue = "default";
+    private readonly bool _lockTemplateToggle;
+    private readonly string? _defaultAlarmSoundId;
+    private readonly string _initialDataJson;
 
-    public EditTimerForm(TimerDefinition? defaults = null, string buttonTitle = "Start Timer", bool lockTemplateToggle = false)
+    public EditTimerForm(TimerDefinition? defaults = null, string? buttonTitle = null, bool lockTemplateToggle = false)
     {
+        this._lockTemplateToggle = lockTemplateToggle;
+        this._defaultAlarmSoundId = AlarmSoundCatalog.Find(defaults?.AlarmSoundId)?.Id;
+        buttonTitle ??= Strings.Action_StartTimer;
         var name = defaults?.Name ?? string.Empty;
-        var duration = defaults?.Duration.ToString() ?? "00:05:00";
-        if (defaults?.Duration.TotalMinutes % 1 == 0 && defaults?.Duration.Seconds == 0)
-        {
-            duration = defaults?.Duration.ToString("c") ?? "00:05:00";
-        }
+        var duration = defaults?.Duration.ToString("c", CultureInfo.InvariantCulture) ?? string.Empty;
+        var timingLabel = lockTemplateToggle ? Strings.Form_DurationLabel : Strings.Form_DurationOrEndTimeLabel;
+        var timingHint = lockTemplateToggle ? Strings.Form_DurationHint : Strings.Form_DurationOrEndTimeHint;
+        var soundChoices = string.Join(",", AlarmSoundCatalog.TimerChoices.Select(choice =>
+            $$"""{"title":"{{JsonEncoded(choice.Name)}}","value":"{{JsonEncoded(choice.Id ?? DefaultSoundValue)}}"}"""));
 
-        var saveAsTemplate = defaults?.IsTemplate ?? false;
-        var toggleValue = saveAsTemplate ? "true" : "false";
+        this._initialDataJson = CreateFormData(name, duration, string.Empty, this._defaultAlarmSoundId,
+            defaults?.IsTemplate ?? false);
+        this.DataJson = this._initialDataJson;
 
-        TemplateJson = $$"""
-                         {
-                             "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                             "type": "AdaptiveCard",
-                             "version": "1.5",
-                             "body": [
-                                 {
-                                     "type": "Input.Text",
-                                     "id": "name",
-                                     "label": "Name",
-                                     "placeholder": "Timer name (optional)",
-                                     "value": "{{JsonEncoded(name)}}",
-                                     "isRequired": false
-                                 },
-                                 {
-                                     "type": "Input.Text",
-                                     "id": "duration",
-                                     "label": "Duration (e.g. 5m, 1h 30m, 05:00)",
-                                     "value": "{{JsonEncoded(duration)}}",
-                                     "errorMessage": "Invalid duration format",
-                                     "isRequired": true
-                                 },
-                                 {
-                                     "type": "Input.Toggle",
-                                     "id": "saveAsTemplate",
-                                     "title": "Save as template",
-                                     "value": "{{toggleValue}}"
-                                 }
-                             ],
-                             "actions": [
-                                 {
-                                     "type": "Action.Submit",
-                                     "title": "{{JsonEncoded(buttonTitle)}}"
-                                 }
-                             ]
-                         }
-                         """;
+        var endTimeInput = lockTemplateToggle
+            ? string.Empty
+            : $$"""
+                ,
+                {
+                    "type": "Input.Time",
+                    "id": "endTime",
+                    "label": "{{JsonEncoded(Strings.Form_EndTimeLabel)}}",
+                    "value": "${endTime}",
+                    "isRequired": false
+                }
+                """;
+        var saveTemplateInput = lockTemplateToggle
+            ? string.Empty
+            : $$"""
+                ,
+                {
+                    "type": "Input.Toggle",
+                    "id": "saveAsTemplate",
+                    "title": "{{JsonEncoded(Strings.Form_ToggleSaveAsTemplate)}}",
+                    "value": "${saveAsTemplate}"
+                }
+                """;
+
+        this.TemplateJson = $$"""
+                              {
+                                  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                                  "type": "AdaptiveCard",
+                                  "version": "1.5",
+                                  "body": [
+                                      {
+                                          "type": "Input.Text",
+                                          "id": "duration",
+                                          "label": "{{JsonEncoded(timingLabel)}}",
+                                          "value": "${duration}",
+                                          "errorMessage": "{{JsonEncoded(Strings.Form_InvalidDurationError)}}",
+                                          "isRequired": {{(lockTemplateToggle ? "true" : "false")}}
+                                      },
+                                      {
+                                          "type": "TextBlock",
+                                          "id": "durationHint",
+                                          "text": "{{JsonEncoded(timingHint)}}",
+                                          "size": "Small",
+                                          "spacing": "Small",
+                                          "isSubtle": true,
+                                          "wrap": true
+                                      }
+                                      {{endTimeInput}},
+                                      {
+                                          "$when": "${hasError}",
+                                          "type": "TextBlock",
+                                          "id": "timingError",
+                                          "text": "${errorMessage}",
+                                          "color": "Attention",
+                                          "wrap": true
+                                      },
+                                      {
+                                          "type": "Input.Text",
+                                          "id": "name",
+                                          "label": "{{JsonEncoded(Strings.Form_NameLabel)}}",
+                                          "value": "${name}",
+                                          "isRequired": false
+                                      },
+                                      {
+                                          "type": "Input.ChoiceSet",
+                                          "id": "alarmSound",
+                                          "label": "{{JsonEncoded(Strings.Setting_AlarmSound_Title)}}",
+                                          "style": "compact",
+                                          "value": "${alarmSound}",
+                                          "choices": [{{soundChoices}}]
+                                      }
+                                      {{saveTemplateInput}}
+                                  ],
+                                  "actions": [
+                                      {
+                                          "type": "Action.Submit",
+                                          "title": "{{JsonEncoded(buttonTitle)}}"
+                                      }
+                                  ]
+                              }
+                              """;
     }
 
-    private string JsonEncoded(string input) => System.Text.Json.JsonSerializer.Serialize(input).Trim('"');
+    private static string JsonEncoded(string input) => JsonEncodedText.Encode(input).ToString();
 
-    public override ICommandResult SubmitForm(string payload)
+    private static string CreateFormData(
+        string name,
+        string duration,
+        string endTime,
+        string? alarmSoundId,
+        bool saveAsTemplate,
+        string? error = null) =>
+        $$"""
+          {
+              "name": "{{JsonEncoded(name)}}",
+              "duration": "{{JsonEncoded(duration)}}",
+              "endTime": "{{JsonEncoded(endTime)}}",
+              "alarmSound": "{{JsonEncoded(alarmSoundId ?? DefaultSoundValue)}}",
+              "saveAsTemplate": "{{(saveAsTemplate ? "true" : "false")}}",
+              "hasError": {{(error is null ? "false" : "true")}},
+              "errorMessage": "{{JsonEncoded(error ?? string.Empty)}}"
+          }
+          """;
+
+    public override ICommandResult SubmitForm(string payload) =>
+        this.SubmitForm(payload, DateTimeOffset.Now, TimeZoneInfo.Local);
+
+    internal ICommandResult SubmitForm(string payload, DateTimeOffset now, TimeZoneInfo timeZone)
     {
-        var formInput = JsonNode.Parse(payload);
-        if (formInput is null)
+        if (JsonNode.Parse(payload) is not JsonObject formInput)
         {
             return CommandResult.KeepOpen();
         }
 
-        var name = formInput["name"]?.ToString();
+        var name = formInput["name"]?.ToString() ?? string.Empty;
         var durationStr = formInput["duration"]?.ToString() ?? string.Empty;
-        var saveAsTemplate = formInput["saveAsTemplate"]?.ToString() == "true";
+        var endTimeStr = formInput["endTime"]?.ToString() ?? string.Empty;
+        var soundValue = formInput["alarmSound"]?.ToString();
+        var alarmSoundId = soundValue == DefaultSoundValue
+            ? null
+            : AlarmSoundCatalog.Find(soundValue)?.Id ?? this._defaultAlarmSoundId;
+        var saveAsTemplate = this._lockTemplateToggle || formInput["saveAsTemplate"]?.ToString() == "true";
 
-        if (TryParseDuration(durationStr, out var duration))
+        if (!string.IsNullOrWhiteSpace(endTimeStr))
         {
-            TimerSubmitted?.Invoke(this, new TimerDefinition(name ?? string.Empty, duration, saveAsTemplate));
-            return CommandResult.GoBack();
-        }
-
-        return CommandResult.ShowToast(new ToastArgs { Message = "Invalid duration format. Try '5m', '1h', or '05:00'", Result = CommandResult.KeepOpen() });
-    }
-
-    private static bool TryParseDuration(string input, out TimeSpan duration)
-    {
-        duration = TimeSpan.Zero;
-        if (string.IsNullOrWhiteSpace(input))
-        {
-            return false;
-        }
-
-        input = input.Trim().ToLowerInvariant();
-
-        if (input.Any(c => c == 'h' || c == 'm' || c == 's'))
-        {
-            try
+            if (saveAsTemplate)
             {
-                var ts = TimeSpan.Zero;
-                var currentVal = "";
-                for (int i = 0; i < input.Length; i++)
-                {
-                    char c = input[i];
-                    if (char.IsDigit(c) || c == '.')
-                    {
-                        currentVal += c;
-                    }
-                    else if (currentVal.Length > 0 && (c == 'h' || c == 'm' || c == 's'))
-                    {
-                        if (double.TryParse(currentVal, out var val))
-                        {
-                            if (c == 'h')
-                            {
-                                ts += TimeSpan.FromHours(val);
-                            }
-
-                            if (c == 'm')
-                            {
-                                ts += TimeSpan.FromMinutes(val);
-                            }
-
-                            if (c == 's')
-                            {
-                                ts += TimeSpan.FromSeconds(val);
-                            }
-                        }
-                        currentVal = "";
-                    }
-                }
-
-                if (ts > TimeSpan.Zero)
-                {
-                    duration = ts;
-                    return true;
-                }
+                return ShowTimingError(Strings.Form_EndTimeTemplateMessage);
             }
-            catch { }
-        }
 
-        if (input.Contains(':'))
-        {
-            if (TimeSpan.TryParse(input, out var ts))
+            if (EndTimeParser.TryGetDuration(
+                    endTimeStr,
+                    now,
+                    timeZone,
+                    out var endTimeDuration,
+                    out _))
             {
-                duration = ts;
-                return true;
+                return SubmitTimer(endTimeDuration);
             }
+
+            return ShowTimingError(Strings.Form_InvalidEndTimeMessage);
         }
 
-        if (double.TryParse(input, out var mins))
+        if (DurationParser.TryParse(durationStr, out var duration))
         {
-            duration = TimeSpan.FromMinutes(mins);
-            return true;
+            return SubmitTimer(duration);
         }
 
-        return false;
+        if (!this._lockTemplateToggle && TimerCreationQueryParser.TryParse(durationStr, now, timeZone, out var timing)
+                                      && timing is { EndTime: not null, Name: null })
+        {
+            return saveAsTemplate
+                ? ShowTimingError(Strings.Form_EndTimeTemplateMessage)
+                : SubmitTimer(timing.Duration);
+        }
+
+        if (!saveAsTemplate && string.IsNullOrWhiteSpace(durationStr))
+        {
+            return ShowTimingError(Strings.Form_DurationOrEndTimeRequired);
+        }
+
+        return ShowTimingError(saveAsTemplate
+            ? Strings.Form_InvalidDurationMessage
+            : Strings.Form_InvalidTimerTimingMessage);
+
+        ICommandResult SubmitTimer(TimeSpan inputDuration)
+        {
+            var args = new TimerSubmittedEventArgs(new TimerDefinition(name, inputDuration, saveAsTemplate)
+            {
+                AlarmSoundId = alarmSoundId
+            });
+            this.TimerSubmitted?.Invoke(this, args);
+            this.DataJson = this._initialDataJson;
+            return args.Result;
+        }
+
+        ICommandResult ShowTimingError(string message)
+        {
+            this.DataJson = CreateFormData(name, durationStr, endTimeStr, alarmSoundId, saveAsTemplate, message);
+            return CommandResult.KeepOpen();
+        }
     }
+}
+
+internal sealed class TimerSubmittedEventArgs(TimerDefinition definition) : EventArgs
+{
+    public TimerDefinition Definition { get; } = definition;
+
+    public ICommandResult Result { get; set; } = CommandResult.GoBack();
 }
