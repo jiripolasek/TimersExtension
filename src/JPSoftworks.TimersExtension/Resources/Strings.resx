@@ -81,6 +81,7 @@
   <data name="Alarm.MessageFormat" xml:space="preserve">
     <value>{0}
 Finished at {1}</value>
+    <comment>{0} is the countdown duration and {1} is the local finish time or date and time.</comment>
   </data>
   <data name="Alarm.MissedSnoozeTitleFormat" xml:space="preserve">
     <value>Missed snooze for {0}</value>
@@ -164,6 +165,7 @@ Finished at {1}</value>
   </data>
   <data name="Dock.PausedTitleFormat" xml:space="preserve">
     <value>Paused · {0}</value>
+    <comment>{0} is a timer or stopwatch title, including its clock display.</comment>
   </data>
   <data name="Dock.RecentStopwatch.Title" xml:space="preserve">
     <value>Latest active stopwatch</value>
@@ -173,29 +175,48 @@ Finished at {1}</value>
     <value>Latest active timer</value>
     <comment>Dock band showing one timer: the newest of those running or paused.</comment>
   </data>
+  <data name="Duration.ClockHoursMinutesSecondsFormat" xml:space="preserve">
+    <value>{0}:{1:D2}:{2:D2}</value>
+    <comment>Digital duration display. {0} is total hours (can exceed 24), {1} is minutes and {2} is seconds. D2 pads to two digits.</comment>
+  </data>
+  <data name="Duration.ClockMinutesSecondsFormat" xml:space="preserve">
+    <value>{0:D2}:{1:D2}</value>
+    <comment>Digital duration display under one hour. {0} is minutes and {1} is seconds. D2 pads to two digits.</comment>
+  </data>
   <data name="Duration.HoursFormat" xml:space="preserve">
     <value>{0}h</value>
+    <comment>Compact duration. {0} is total hours. Use a unit abbreviation that works with any count.</comment>
   </data>
   <data name="Duration.HoursMinutesFormat" xml:space="preserve">
     <value>{0}h {1}m</value>
+    <comment>Compact duration. {0} is hours and {1} is minutes. Use unit abbreviations that work with any count.</comment>
   </data>
   <data name="Duration.MinutesFormat" xml:space="preserve">
     <value>{0}m</value>
+    <comment>Compact duration. {0} is minutes. Use a unit abbreviation that works with any count, including zero.</comment>
   </data>
   <data name="Duration.MinutesLabelFormat" xml:space="preserve">
     <value>{0} min</value>
+    <comment>Whole-minute duration on a saved timer template. {0} is minutes. Use a unit abbreviation that works with any count.</comment>
   </data>
   <data name="Duration.SecondsFormat" xml:space="preserve">
     <value>{0}s</value>
+    <comment>Compact duration. {0} is seconds. Use a unit abbreviation that works with any count.</comment>
+  </data>
+  <data name="Duration.StopwatchTimeFormat" xml:space="preserve">
+    <value>{0}{1}{2:D2}</value>
+    <comment>{0} is the digital duration display, {1} is the regional decimal separator and {2} is hundredths of a second (two digits).</comment>
   </data>
   <data name="Preview.EndsAtFormat" xml:space="preserve">
     <value>Ends at {0}</value>
   </data>
   <data name="Preview.IfStartedAtFormat" xml:space="preserve">
     <value>{0} if started at {1}</value>
+    <comment>{0} is either a short duration or the complete Ends at preview. {1} is the local start time.</comment>
   </data>
   <data name="Preview.TimerActionAndTimingFormat" xml:space="preserve">
     <value>{0} · {1}</value>
+    <comment>{0} is the action that starts the timer. {1} describes its expected timing.</comment>
   </data>
   <data name="Fallback.StartedStopwatch" xml:space="preserve">
     <value>Started stopwatch</value>
@@ -223,6 +244,7 @@ Finished at {1}</value>
   </data>
   <data name="Fallback.TypeDurationMessage" xml:space="preserve">
     <value>Type a duration such as '10m' or a finish time such as 'until 2300' or 'until 23:00'. You can add a name.</value>
+    <comment>Keep input examples in sync with the accepted units and end-time syntax in the Parsing resources.</comment>
   </data>
   <data name="Fallback.TypeDurationTitle" xml:space="preserve">
     <value>Type a duration or end time to start a timer</value>
@@ -280,6 +302,7 @@ Finished at {1}</value>
   </data>
   <data name="Label.DefaultTimerNameFormat" xml:space="preserve">
     <value>Timer {0}</value>
+    <comment>Generated name for an unnamed timer. {0} is a compact duration such as 5m.</comment>
   </data>
   <data name="Label.Duration" xml:space="preserve">
     <value>Duration</value>
@@ -309,6 +332,7 @@ Finished at {1}</value>
   </data>
   <data name="Label.NameAndTimeFormat" xml:space="preserve">
     <value>{0} · {1}</value>
+    <comment>{0} is a name or status label and {1} is a duration, elapsed time or timestamp label.</comment>
   </data>
   <data name="Page.Create" xml:space="preserve">
     <value>Create</value>
@@ -339,6 +363,7 @@ Finished at {1}</value>
   </data>
   <data name="Page.Timers.SearchPlaceholder" xml:space="preserve">
     <value>Try tea 4m or search timers</value>
+    <comment>In the example, tea is a user-entered name and 4m is a duration. Keep the duration valid for the translated Parsing.MinuteAliases.</comment>
   </data>
   <data name="Page.Timers.Title" xml:space="preserve">
     <value>Timers</value>
@@ -460,9 +485,11 @@ Finished at {1}</value>
   </data>
   <data name="Stopwatch.LapSubtitleFormat" xml:space="preserve">
     <value>{0} (Total: {1})</value>
+    <comment>{0} is the duration of the lap and {1} is the total elapsed time at the end of the lap.</comment>
   </data>
   <data name="Stopwatch.LapTitleFormat" xml:space="preserve">
     <value>Lap {0}</value>
+    <comment>{0} is the lap number, starting at 1.</comment>
   </data>
   <data name="Stopwatch.Slowest" xml:space="preserve">
     <value>Slowest</value>
@@ -517,19 +544,23 @@ Finished at {1}</value>
   </data>
   <data name="Parsing.HourAliases" xml:space="preserve">
     <value>h|hr|hour|hours</value>
-    <comment>Accepted hour units, separated by |. Translate abbreviations and singular/plural forms. English aliases remain available.</comment>
+    <comment>Accepted hour aliases, separated by |. Use distinct aliases across all three units. The symbols h, m, and s have fixed meanings. Translated aliases take precedence over English words.</comment>
   </data>
   <data name="Parsing.MinuteAliases" xml:space="preserve">
     <value>m|min|minute|minutes</value>
-    <comment>Accepted minute units, separated by |. Translate abbreviations and singular/plural forms. English aliases remain available.</comment>
+    <comment>Accepted minute aliases, separated by |. Use distinct aliases across all three units. The symbols h, m, and s have fixed meanings. Translated aliases take precedence over English words.</comment>
   </data>
   <data name="Parsing.SecondAliases" xml:space="preserve">
     <value>s|sec|second|seconds</value>
-    <comment>Accepted second units, separated by |. Translate abbreviations and singular/plural forms. English aliases remain available.</comment>
+    <comment>Accepted second aliases, separated by |. Use distinct aliases across all three units. The symbols h, m, and s have fixed meanings. Translated aliases take precedence over English words.</comment>
+  </data>
+  <data name="Parsing.TimerPrefixes" xml:space="preserve">
+    <value>start timer</value>
+    <comment>Optional prefixes for timer queries, separated by |. A space and a timer query follow the prefix. The longest matching phrase wins, including the English prefix.</comment>
   </data>
   <data name="Parsing.StopwatchPrefixes" xml:space="preserve">
     <value>start stopwatch|stopwatch</value>
-    <comment>Accepted prefixes for starting a named stopwatch from Home, separated by |. A name follows the prefix.</comment>
+    <comment>Accepted prefixes for starting a named stopwatch from Home, separated by |. A space and a name follow the prefix. The longest matching phrase wins, including the English prefixes.</comment>
   </data>
   <data name="Parsing.EndTimePattern" xml:space="preserve">
     <value>^(?:(?&lt;name&gt;.*?)\s+)?(?:until|at)\s+(?&lt;time&gt;.+)$</value>
@@ -549,12 +580,14 @@ Finished at {1}</value>
   </data>
   <data name="Action.ShowOlderResultsFormat" xml:space="preserve">
     <value>Show older results ({0})</value>
+    <comment>{0} is the number of additional timer or stopwatch results that are currently hidden.</comment>
   </data>
   <data name="Action.StartDurationFormat" xml:space="preserve">
     <value>Start {0}</value>
   </data>
   <data name="Confirm.ClearFinishedTimersFormat" xml:space="preserve">
     <value>Remove {0} from timer history? Dock pins for these timers will stop working. Repeat last timer may change.</value>
+    <comment>{0} is the number of finished or stopped timers being removed and may be 1. Repeat last timer is the command named by Action.RepeatLastTimer.</comment>
   </data>
   <data name="Section.Active" xml:space="preserve">
     <value>Active</value>

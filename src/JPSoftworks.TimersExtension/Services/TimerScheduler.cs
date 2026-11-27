@@ -223,11 +223,10 @@ public sealed partial class TimerScheduler : IDisposable
                 "The duration must be positive and produce a representable end time.");
         }
 
-        var displayName = LabelFormatter.FormatTimerName(definition.Name, definition.Duration);
         var instance = new TimerInstance
         {
             Id = Guid.NewGuid(),
-            Name = displayName,
+            Name = definition.Name?.Trim() ?? string.Empty,
             Duration = definition.Duration,
             SnoozeDuration = snoozeDuration,
             AlarmSoundId = AlarmSoundCatalog.Find(definition.AlarmSoundId)?.Id,
@@ -242,7 +241,7 @@ public sealed partial class TimerScheduler : IDisposable
             this._timers[instance.Id] = instance;
             if (instance.IsTemplate)
             {
-                this._templates.Add(NormalizeTemplate(new TimerDefinition(definition.Name, instance.Duration, true)
+                this._templates.Add(NormalizeTemplate(new TimerDefinition(instance.Name, instance.Duration, true)
                 {
                     AlarmSoundId = instance.AlarmSoundId
                 }));

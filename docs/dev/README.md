@@ -29,6 +29,12 @@ Build and test Timers for Command Palette from the repository root in PowerShell
 
 For changes to the packaging or release scripts, run the checks used by [CI](../../.github/workflows/ci.yml). Shared project settings are in [`eng/CmdPal.Extension.props`](../../eng/CmdPal.Extension.props), and script defaults are in [`eng/Package.config.psd1`](../../eng/Package.config.psd1).
 
+## Localization
+
+- Add a `Strings.<culture>.resx` beside [`Strings.resx`](../../src/JPSoftworks.TimersExtension/Resources/Strings.resx) for extension commands, pages, settings, and notifications. Keep resource keys and format placeholders. Missing entries fall back to English. Run the Visual Studio custom tool on the neutral file when adding or removing resource keys.
+- Add `Strings/<culture>/Resources.resw` in the package project for the display name and description Windows and Command Palette read from the manifest. Match the provider name to `Provider.DisplayName` in the extension resources. See the [English package resources](../../src/JPSoftworks.TimersExtension.Package/Strings/en-us/Resources.resw).
+- Translate the timer and stopwatch query prefixes, duration unit aliases, and end-time pattern with the corresponding input examples. Keep `h`, `m`, and `s` for hours, minutes, and seconds. Check that the examples parse with matching and different display languages and regional formats, then check the package metadata, lists, forms, Dock, and alarm notifications in the built MSIX.
+
 ## Local deployment
 
 Enable [Developer Mode](https://learn.microsoft.com/en-us/windows/apps/dev-tools/winapp-cli/security#developer-mode), then deploy and request a Command Palette reload.

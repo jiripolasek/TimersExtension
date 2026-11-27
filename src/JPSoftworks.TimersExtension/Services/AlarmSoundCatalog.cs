@@ -9,8 +9,10 @@ using JPSoftworks.TimersExtension.Resources;
 
 namespace JPSoftworks.TimersExtension.Services;
 
-internal sealed record AlarmSoundDefinition(string Id, string DisplayName, string? FileName)
+internal sealed record AlarmSoundDefinition(string Id, Func<string> GetDisplayName, string? FileName)
 {
+    public string DisplayName => this.GetDisplayName();
+
     public bool IsSilent => this.FileName is null;
 
     public string? Uri => this.FileName is null ? null : AlarmSoundCatalog.GetSoundUri(this.FileName);
@@ -24,13 +26,13 @@ internal static class AlarmSoundCatalog
 
     private static readonly AlarmSoundDefinition[] Sounds =
     [
-        new(DefaultId, Strings.AlarmSound_Aurora, "aurora.wav"),
-        new("gentle-chime", Strings.AlarmSound_GentleChime, "gentle-chime.wav"),
-        new("bright-bell", Strings.AlarmSound_BrightBell, "bright-bell.wav"),
-        new("digital-pulse", Strings.AlarmSound_DigitalPulse, "digital-pulse.wav"),
-        new("urgent-alert", Strings.AlarmSound_UrgentAlert, "urgent-alert.wav"),
-        new("classic-chimes", Strings.AlarmSound_ClassicChimes, "chimes.wav"),
-        new("silent", Strings.AlarmSound_Silent, null)
+        new(DefaultId, static () => Strings.AlarmSound_Aurora, "aurora.wav"),
+        new("gentle-chime", static () => Strings.AlarmSound_GentleChime, "gentle-chime.wav"),
+        new("bright-bell", static () => Strings.AlarmSound_BrightBell, "bright-bell.wav"),
+        new("digital-pulse", static () => Strings.AlarmSound_DigitalPulse, "digital-pulse.wav"),
+        new("urgent-alert", static () => Strings.AlarmSound_UrgentAlert, "urgent-alert.wav"),
+        new("classic-chimes", static () => Strings.AlarmSound_ClassicChimes, "chimes.wav"),
+        new("silent", static () => Strings.AlarmSound_Silent, null)
     ];
 
     public static IReadOnlyList<AlarmSoundDefinition> All => Sounds;

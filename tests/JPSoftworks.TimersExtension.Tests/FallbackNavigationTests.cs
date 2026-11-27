@@ -211,6 +211,45 @@ public sealed class FallbackNavigationTests
     }
 
     [Fact]
+    public void PartialTranslationUsesTheLongestStopwatchPrefixAndKeepsTheName()
+    {
+        var originalCulture = CultureInfo.CurrentCulture;
+        var originalUICulture = CultureInfo.CurrentUICulture;
+        var directory = CreateTemporaryDirectory();
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fi-FI");
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("fr-SC");
+            using var storage = new StopwatchStorage(directory);
+            using var scheduler = new StopwatchScheduler(storage);
+            var item = new StopwatchFallbackCommandItem(scheduler, true);
+            var command = Assert.IsType<StopwatchFallbackCommand>(item.Command);
+
+            item.UpdateQuery("de\u0301marrer le chronome\u0300tre Lecture");
+            Assert.Equal("Chronométrer « Lecture »", item.Title);
+            AssertDismisses(command.Invoke());
+
+            item.UpdateQuery("start stopwatch Focus");
+            Assert.Equal("Chronométrer « Focus »", item.Title);
+            AssertDismisses(command.Invoke());
+
+            item.UpdateQuery("start stopwatch");
+            Assert.Empty(item.Title);
+            Assert.Equal(CommandResultKind.KeepOpen, command.Invoke().Kind);
+
+            var stopwatches = scheduler.GetStopwatchesSnapshot();
+            Assert.Contains(stopwatches, stopwatch => stopwatch.Name == "Lecture");
+            Assert.Contains(stopwatches, stopwatch => stopwatch.Name == "Focus");
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = originalCulture;
+            CultureInfo.CurrentUICulture = originalUICulture;
+            Directory.Delete(directory, true);
+        }
+    }
+
+    [Fact]
     public void NewTimerFormReturnsToTheParentAfterStarting()
     {
         var directory = CreateTemporaryDirectory();

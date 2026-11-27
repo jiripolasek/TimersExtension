@@ -177,13 +177,7 @@ internal static class LabelFormatter
         return ResourceFormatter.Format(format, dateAndTime);
     }
 
-    public static string FormatStopwatchTime(TimeSpan time)
-    {
-        if (time.TotalHours >= 1)
-        {
-            return $"{(int)time.TotalHours}:{time.Minutes:D2}:{time.Seconds:D2}.{time.Milliseconds / 10:D2}";
-        }
-
-        return $"{time.Minutes:D2}:{time.Seconds:D2}.{time.Milliseconds / 10:D2}";
-    }
+    public static string FormatStopwatchTime(TimeSpan time) =>
+        ResourceFormatter.Format(Strings.Duration_StopwatchTimeFormat, DurationParser.FormatClock(time),
+            CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator, Math.Abs(time.Milliseconds) / 10);
 }

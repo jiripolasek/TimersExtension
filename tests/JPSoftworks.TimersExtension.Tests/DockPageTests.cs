@@ -418,7 +418,8 @@ public sealed class DockPageTests : IDisposable
         var result = Assert.IsType<StartTimerCommand>(item.Command).Invoke();
 
         var timer = Assert.Single(timers.GetTimersSnapshot());
-        Assert.Equal(title, timer.Name);
+        Assert.Equal(name, timer.Name);
+        Assert.Equal(title, LabelFormatter.FormatTimerName(timer.Name, timer.Duration));
         Assert.Equal(TimeSpan.FromMinutes(4), timer.Duration);
         Assert.Single(timers.GetTemplatesSnapshot());
         Assert.Equal(CommandResultKind.ShowToast, result.Kind);

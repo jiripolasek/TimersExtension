@@ -6,7 +6,6 @@
 
 using System.Globalization;
 using System.Text.RegularExpressions;
-using JPSoftworks.TimersExtension.Resources;
 
 namespace JPSoftworks.TimersExtension.Services;
 
@@ -37,18 +36,16 @@ internal static class TimerCreationQueryParser
         }
 
         input = input.Trim();
-        var prefix = Strings.Action_StartTimer;
-        if (input.Length > prefix.Length && char.IsWhiteSpace(input[prefix.Length])
-                                         && input.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-        {
-            input = input[prefix.Length..].TrimStart();
-        }
-
         resources ??= TimerParsingResources.Current;
+        var invariant = TimerParsingResources.Invariant;
+        var uiCulture = TimerParsingResources.UICulture;
+        input = TimerParsingResources.TrimCommandPrefix(input, resources.TimerPrefixes, invariant.TimerPrefixes, uiCulture)
+                ?? input;
+
         var patterns = new[]
         {
-            (resources.EndTimePattern, Strings.Culture ?? CultureInfo.CurrentUICulture),
-            (TimerParsingResources.Invariant.EndTimePattern, CultureInfo.InvariantCulture)
+            (resources.EndTimePattern, uiCulture),
+            (invariant.EndTimePattern, CultureInfo.InvariantCulture)
         };
         var invalidEndTime = false;
         foreach (var (pattern, culture) in patterns)

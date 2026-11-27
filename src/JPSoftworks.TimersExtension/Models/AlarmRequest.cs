@@ -58,7 +58,7 @@ public sealed record AlarmRequest
         return new AlarmRequest
         {
             TimerId = timer.Id,
-            TimerName = name,
+            TimerName = timer.Name,
             FinishedAt = completion.FinishedAt,
             AlarmSoundId = completion.AlarmSoundId,
             Title = ResourceFormatter.Format(titleFormat, name),

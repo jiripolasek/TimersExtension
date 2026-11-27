@@ -343,7 +343,7 @@ public sealed class IndexPageQueryTests
             restarted.TransitionToFinished(now.AddHours(-1), duration);
 
             var overview = page.GetItems().OfType<TimerInstanceListItem>().ToList();
-            Assert.Equal([active.Name, "Focus"], overview.Select(item => item.Title));
+            Assert.Equal(["Timer 5m", "Focus"], overview.Select(item => item.Title));
             Assert.Equal(CommandIds.TimerTemplate(template.Id), page.GetItems()[^1].Command?.Id);
             Assert.Equal(Strings.Action_NewTimer, page.GetItems()[0].Title);
             Assert.StartsWith("Finished at ", overview[1].Subtitle);
@@ -355,7 +355,7 @@ public sealed class IndexPageQueryTests
             Assert.Same(Icons.ChevronDown, showOlder.Icon);
             Assert.IsAssignableFrom<InvokableCommand>(showOlder.Command).Invoke();
             Assert.Equal(TimerIndexFilters.All, Assert.IsType<TimerIndexFilters>(page.Filters).CurrentFilterId);
-            Assert.Equal([active.Name, "Focus", "Break", "Tea"],
+            Assert.Equal(["Timer 5m", "Focus", "Break", "Tea"],
                 page.GetItems().OfType<TimerInstanceListItem>().Select(item => item.Title));
             var expanded = page.GetItems();
             Assert.Equal(
@@ -367,7 +367,7 @@ public sealed class IndexPageQueryTests
             var hideOlder = expanded[^4];
             Assert.Same(Icons.ChevronUp, hideOlder.Icon);
             Assert.IsAssignableFrom<InvokableCommand>(hideOlder.Command).Invoke();
-            Assert.Equal([active.Name, "Focus"],
+            Assert.Equal(["Timer 5m", "Focus"],
                 page.GetItems().OfType<TimerInstanceListItem>().Select(item => item.Title));
             Assert.IsAssignableFrom<InvokableCommand>(showOlder.Command).Invoke();
             var clear = Assert.Single(page.GetItems(), item => item.Title == Strings.Action_ClearFinishedTimers);
