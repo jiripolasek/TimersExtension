@@ -1,0 +1,23 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { site, withBase } from "../data/site";
+---
+
+<Layout title="Support | Timers for Command Palette" description="Get help starting timers, recording laps, and setting up the Command Palette Dock." path="support/">
+  <article class="wrap document prose">
+    <h1>Support</h1>
+    <p class="document-intro">Get started with Timers and find help when something goes wrong.</p>
+
+    <h2>Find Timers in Command Palette</h2>
+    <p>Install <a href={site.powerToys}>PowerToys</a>, enable Command Palette in PowerToys Settings, then <a href={withBase("#install")}>install the extension</a>. Open Command Palette with <kbd>Win</kbd> + <kbd>Alt</kbd> + <kbd>Space</kbd> and search for <strong>Timers</strong> or <strong>Stopwatches</strong>.</p>
+
+    <h2>Start a countdown or stopwatch</h2>
+    <p>On Home or the Timers page, type <code>Tea 4m</code> to start a four-minute countdown. Type <code>until 15:30</code> to count down to the next occurrence of that local time. On the Stopwatches page, enter a name and select the start result. Press <kbd>Ctrl</kbd> + <kbd>L</kbd> on a running stopwatch to record a lap.</p>
+
+    <h2>Add Timers to the Dock</h2>
+    <p>Enable the Dock in Command Palette settings. Right-click the Dock, choose <strong>Edit Dock</strong>, then use the <strong>+</strong> button to add <strong>Active timers</strong> or <strong>Active stopwatches</strong>. Select <strong>Save</strong> to apply the changes. <a href={site.dockGuide}>Command Palette Dock guide</a>.</p>
+
+    <h2>Report a problem</h2>
+    <p>Include your Windows, PowerToys, and Timers versions and the steps you took. <a href={site.issues}>Open GitHub Issues</a>.</p>
+  </article>
+</Layout>

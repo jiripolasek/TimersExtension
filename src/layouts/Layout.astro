@@ -1,0 +1,82 @@
+---
+import ThemeControl from "../components/ThemeControl.astro";
+import ThemeScript from "../components/ThemeScript.astro";
+import { site, withBase } from "../data/site";
+import soraLatin from "@fontsource-variable/sora/files/sora-latin-wght-normal.woff2?url";
+import "@fontsource-variable/sora";
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  path?: string;
+}
+
+const { title = site.name, description = site.description, path = "" } = Astro.props;
+const canonical = new URL(withBase(path), Astro.site);
+const socialImage = new URL(withBase("images/social.png"), Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#0b1526" />
+    <meta name="color-scheme" content="light dark" />
+    <ThemeScript />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href={withBase("logo.svg")} />
+    <link rel="preload" href={soraLatin} as="font" type="font/woff2" crossorigin="anonymous" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={socialImage} />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="640" />
+    <meta property="og:image:alt" content="Timers and Stopwatches for Command Palette, showing the Timers list and saved templates." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href={withBase()} aria-label="Timers home">
+          <img src={withBase("logo.svg")} alt="" width="34" height="34" />
+          Timers
+        </a>
+        <nav class="main-nav" aria-label="Main navigation">
+          <a href={withBase("#features")}>Features</a>
+          <a href={withBase("preview/")} aria-current={path === "preview/" ? "page" : undefined}>Screenshots</a>
+          <a href={withBase("support/")} aria-current={path === "support/" ? "page" : undefined}>Support</a>
+        </nav>
+        <div class="header-actions">
+          <a class="header-install" href={withBase("#install")}>Install</a>
+          <ThemeControl />
+        </div>
+      </div>
+    </header>
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <footer class="wrap site-footer">
+      <div>
+        <a class="brand" href={withBase()}>
+          <img src={withBase("logo.svg")} alt="" width="30" height="30" />
+          Timers
+        </a>
+        <p>Made by <a href={site.author}>Jiří Polášek</a></p>
+      </div>
+      <nav aria-label="Footer navigation">
+        <a href={site.repository}>GitHub</a>
+        <a href={site.releases}>Releases</a>
+        <a href={withBase("support/")}>Support</a>
+        <a href={withBase("privacy/")}>Privacy</a>
+      </nav>
+    </footer>
+  </body>
+</html>

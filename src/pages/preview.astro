@@ -1,0 +1,41 @@
+---
+import type { ComponentProps } from "astro/types";
+import Layout from "../layouts/Layout.astro";
+import Screenshot from "../components/Screenshot.astro";
+import timers from "../assets/01-timers.png";
+import newTimer from "../assets/02-new-timer.png";
+import stopwatches from "../assets/03-stopwatches.png";
+import laps from "../assets/04-stopwatch-laps.png";
+import dock from "../assets/05-timers-and-dock-wide.png";
+import home from "../assets/06-home-commands.png";
+import templates from "../assets/07-home-template-commands.png";
+
+const palette: ComponentProps<typeof Screenshot>["crop"] = [596, 306, 728, 608];
+const screenshots: (ComponentProps<typeof Screenshot> & { id: string; title: string })[] = [
+  { id: "dock", title: "Timers in the Dock", src: dock, crop: [799, 0, 322, 38], alt: "Dock shortcuts for the Timers list, a running timer, and a running stopwatch." },
+  { id: "timers", title: "Timers and saved templates", src: timers, crop: palette, alt: "Focus is running, Eggs is paused, and Coffee is finished. Three templates appear below the timer list." },
+  { id: "new-timer", title: "Create a countdown", src: newTimer, crop: palette, alt: "The New timer form in Command Palette." },
+  { id: "stopwatches", title: "Stopwatches", src: stopwatches, crop: palette, alt: "The Stopwatches list in Command Palette with running and finished entries." },
+  { id: "laps", title: "Stopwatch laps", src: laps, crop: palette, alt: "A stopwatch detail page with lap and elapsed times." },
+  { id: "home", title: "Commands on Home", src: home, crop: palette, alt: "Command Palette Home with Timers, Stopwatches, saved template shortcuts, and recent timer actions." },
+  { id: "templates", title: "Find a saved timer by name", src: templates, crop: [596, 378, 728, 392], alt: "Command Palette search results showing matching timer template commands." },
+];
+---
+
+<Layout title="Screenshots | Timers for Command Palette" path="preview/">
+  <section class="wrap document" aria-labelledby="screenshots-heading">
+    <h1 id="screenshots-heading">Screenshots</h1>
+    <p class="document-intro">A closer look at countdowns, stopwatch laps, and the Command Palette Dock.</p>
+    <div class="gallery">
+      {screenshots.map(({ id, title, ...screenshot }) => (
+        <figure id={id}>
+          <figcaption>
+            <h2>{title}</h2>
+            <a href={screenshot.src.src} aria-label={`Open full-size screenshot of ${title.toLowerCase()}`}>Full screenshot</a>
+          </figcaption>
+          <Screenshot {...screenshot} />
+        </figure>
+      ))}
+    </div>
+  </section>
+</Layout>
